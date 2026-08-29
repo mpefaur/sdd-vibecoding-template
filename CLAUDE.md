@@ -30,6 +30,7 @@ returns 200"). Run it. If it fails, fix and re-run. Report only verified results
 Always Spec → Plan → Tasks → Implement. Concretely:
 
 ```
+/kickoff                # once, on a fresh clone — adopts the template (see AGENTS.md §0)
 /speckit.constitution   # once per project
 /speckit.specify        # what & why  → creates branch + specs/<n>-<slug>/spec.md
 /speckit.clarify        # resolve [NEEDS CLARIFICATION] before planning

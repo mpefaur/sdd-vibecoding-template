@@ -60,24 +60,72 @@ Caveman degrades cost, not correctness.
 
 ---
 
-## 3. Configure the project (do this before your first prompt)
+## 3. Adopt the template (your first prompt)
 
-Open [`AGENTS.md`](../AGENTS.md) and fill in **§1**:
+A fresh clone is deliberately unconfigured: `AGENTS.md` §1 is placeholders and the
+verification gate is a no-op. `AGENTS.md` §0 tells every agent to fix that before doing
+anything else, so you do not have to remember it.
 
-```markdown
-- **Name:** invoice-api
-- **Purpose:** REST API that issues and reconciles customer invoices.
-- **Stack:** Python 3.12, FastAPI, PostgreSQL, pytest
-- **Run:** `uv run fastapi dev` · **Test:** `uv run pytest -q` · **Lint:** `uv run ruff check .` · **Build:** `docker build .`
+### The agentic path
+
+```
+/kickoff a REST API that issues and reconciles customer invoices
 ```
 
-Those four commands are what every agent uses to prove work is done, so they must be real
-and runnable. Everything else in `AGENTS.md` works unchanged.
+The `kickoff` skill proposes a concrete configuration and waits:
 
-Then run `/speckit.constitution` to adapt
-[`.specify/memory/constitution.md`](../.specify/memory/constitution.md). The shipped
-version is deliberately light (5 principles + quality gates); add only principles you'd
-actually enforce in review — a constitution nobody follows is worse than none.
+```
+Propongo:
+  Name:    invoice-api
+  Purpose: REST API that issues and reconciles customer invoices.
+  Stack:   Python 3.12 · FastAPI · PostgreSQL · pytest · ruff
+  Run:     uv run fastapi dev
+  Test:    uv run pytest -q
+  Lint:    uv run ruff check .
+  Build:   docker build .
+
+¿OK, o cambio algo?
+```
+
+On your OK it writes `AGENTS.md` §1, deletes §0 and the placeholder note, sets
+`LINT_CMD`/`TEST_CMD` in the gate, runs `pre-commit install`, moves this template's
+README to `docs/TEMPLATE_README.md` and writes a new one for your project, checks whether
+`origin` still points at the template, then continues into `/speckit.constitution` and
+`/speckit.specify` with your description.
+
+**It writes configuration and docs only.** No `npm init`, no `src/`, no framework
+scaffolding — `AGENTS.md` §2 forbids code before `tasks.md`, and the skill is bound by it
+like anything else. Your stack gets installed during `/speckit.implement`.
+
+### The manual path
+
+Not on Claude Code, or you'd rather do it yourself. Same six steps:
+
+1. Fill `AGENTS.md` §1 with real values:
+   ```markdown
+   - **Name:** invoice-api
+   - **Purpose:** REST API that issues and reconciles customer invoices.
+   - **Stack:** Python 3.12, FastAPI, PostgreSQL, pytest
+   - **Run:** `uv run fastapi dev` · **Test:** `uv run pytest -q` · **Lint:** `uv run ruff check .` · **Build:** `docker build .`
+   ```
+2. Delete `AGENTS.md` §0 and the `> Replace the <PROJECT> placeholders…` note.
+3. Set `LINT_CMD` / `TEST_CMD` in `.claude/hooks/verification-gate.sh` to the same
+   Test and Lint commands (see §9).
+4. `pre-commit install`.
+5. Rewrite `README.md` for your project.
+6. `git remote -v` — a plain `git clone` leaves `origin` on the template repo. Fix it with
+   `git remote set-url origin <your-repo>` before your first push.
+
+Those four commands in §1 are what every agent uses to prove work is done, so they must be
+real and runnable. Everything else in `AGENTS.md` works unchanged.
+
+### Then: the constitution
+
+`/speckit.constitution` adapts
+[`.specify/memory/constitution.md`](../.specify/memory/constitution.md) (`/kickoff` calls
+it for you). The shipped version is deliberately light (5 principles + quality gates); add
+only principles you'd actually enforce in review — a constitution nobody follows is worse
+than none.
 
 ---
 
@@ -347,6 +395,8 @@ pre-commit run --all-files  # audit what is already tracked
 | `rtk: command not found` after install | Add `~/.local/bin` and `~/.cargo/bin` to PATH, or install via `brew install rtk`. Agents fall back to raw commands — nothing breaks. |
 | Caveman install fails | Needs Node ≥ 18. Verify with `node -v`; re-run `curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh \| bash`. |
 | Agent skips straight to code | Point it at `AGENTS.md` §2 and ask for `/speckit.specify` first. If it happens repeatedly, tighten the rule — don't repeat it every prompt. |
+| Agent starts coding on a fresh clone | It skipped `AGENTS.md` §0. Say `/kickoff` (or point it at §0). If it keeps happening, §0 has drifted below the placeholders — it must stay above §1. |
+| `/kickoff` says the repo is already adopted | `AGENTS.md` §1 has no `<PLACEHOLDERS>` left. That is the expected end state; re-run only if you want to change the stack. |
 | Agent says `BLOCKED by .claude/hooks/dangerous-actions-blocker.sh` | Working as intended — it hit a destructive command. If the pattern is wrong for your project, edit the hook. |
 | Every turn runs the test suite | The `Stop` gate is armed and your tree is dirty. Commit, or unset `LINT_CMD`/`TEST_CMD`. |
 | Agent can't read a file it should | A `permissions.deny` glob in `.claude/settings.json` matched it. Narrow the glob there. |

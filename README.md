@@ -23,6 +23,7 @@ language, framework, or architecture.
 | **`CLAUDE.md`**            | Claude Code entry point; imports `AGENTS.md`                           |
 | **`.cursor/rules/`**       | Cursor rules (Karpathy + SDD workflow), always applied                 |
 | **`.clinerules/`**         | Cline rules + Spec Kit workflows                                       |
+| **`/kickoff`**             | One command turns the template into a configured project              |
 | **Guardrails**             | Secret-read denies, a destructive-command blocker, a lint+test gate    |
 | **`scripts/setup.*`**      | Idempotent bootstrap for macOS/Linux/WSL and Windows                   |
 
@@ -45,6 +46,8 @@ sdd-vibecoding-template/
 
 ## Start a new project
 
+Three commands in your shell, then you're talking to the agent.
+
 ```bash
 # 1. Get the template (pick one)
 gh repo create my-project --template <you>/sdd-vibecoding-template --private --clone
@@ -57,18 +60,19 @@ cd my-project
 ./scripts/setup.sh          # macOS / Linux / WSL
 .\scripts\setup.ps1         # Windows PowerShell 5.1+
 
-# 3. Tell the agents what this project is
-$EDITOR AGENTS.md           # fill in §1: name, purpose, stack, run/test/lint commands
-
-# 3b. Arm the verification gate with the same commands (optional but recommended)
-$EDITOR .claude/hooks/verification-gate.sh   # set LINT_CMD and TEST_CMD
-pre-commit install                           # secret detection on every commit
-
-# 4. Open in your agent and start the flow
+# 3. Open the agent
 claude                      # or Cursor / Cline / VS Code
 ```
 
-Then, inside the agent:
+Everything else happens in conversation:
+
+```
+/kickoff a web app that logs daily habits and shows streaks
+```
+
+`/kickoff` proposes a concrete stack and command set, waits for your OK, then writes
+`AGENTS.md` §1, arms the verification gate, enables the commit hooks, rewrites this
+README for your project, and hands off to the flow:
 
 ```
 /speckit.constitution   Adapt the base constitution to this project
@@ -79,6 +83,13 @@ Then, inside the agent:
 /speckit.analyze        Check spec ↔ plan ↔ tasks consistency
 /speckit.implement      Build it, verified
 ```
+
+> `/kickoff` writes **configuration only** — no `npm init`, no `src/`. Your stack gets
+> installed during `/speckit.implement`, from tasks that came from a spec. That is the
+> point of the template: nothing exists until something specified it.
+>
+> Not on Claude Code? `AGENTS.md` §0 lists the same steps for any agent to follow, and
+> [docs/TEMPLATE_USAGE.md](docs/TEMPLATE_USAGE.md) §3 has the manual version.
 
 > **Naming note.** Spec Kit ≥ 0.15 installs these as Claude *skills* named
 > `speckit-<name>`. This template ships `/speckit.<name>` aliases in

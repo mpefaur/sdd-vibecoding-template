@@ -4,8 +4,22 @@ Single source of truth for **every** coding agent in this repo (Claude Code, Cur
 Cline, Copilot, Codex, Gemini…). Agent-specific files (`CLAUDE.md`,
 `.cursor/rules/`, `.clinerules/`) import or restate this file — they never contradict it.
 
-> Replace the `<PROJECT>` placeholders below when you start a real project.
-> Keep this file short. If it grows past ~120 lines, move detail into `docs/`.
+> Replace the `<PROJECT>` placeholders below when you start a real project — §0 does it.
+> Keep this file short. If it grows past ~120 lines, move detail into `docs/`
+> (§0 is temporary scaffolding and is deleted on adoption; it doesn't count).
+
+## 0. First run — adopt this template
+
+**§1 still shows `<PLACEHOLDERS>` → this repo is an unadopted template.** Adopt it before
+anything else; a spec written against placeholder commands cannot be verified.
+
+Claude Code: **`/kickoff <what you want to build>`**. Any other agent, same steps by hand:
+propose and confirm name/purpose/stack/commands → write §1 → delete this section and the
+note above → set `LINT_CMD`/`TEST_CMD` in `.claude/hooks/verification-gate.sh` →
+`pre-commit install` → `/speckit.constitution` → `/speckit.specify`.
+
+Config and docs only — **no scaffolding**. §2 forbids code before `tasks.md`, `npm init`
+included. Detail: `docs/TEMPLATE_USAGE.md` §3.
 
 ## 1. Project
 
