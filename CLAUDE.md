@@ -49,6 +49,39 @@ Always Spec → Plan → Tasks → Implement. Concretely:
 Do not write implementation code before `tasks.md` exists — except for one-line typo
 fixes and answering questions.
 
+## Implementation execution
+
+`tasks.md` groups work into Setup, Foundational, then one phase per user story —
+`tasks-template.md`'s own "Parallel Team Strategy" already says stories can proceed in
+parallel once Foundational is done, it just assumes human developers. Once Foundational
+completes, before parallelizing, diff the file paths listed across the ready story
+phases:
+
+- **Disjoint file sets across two or more stories** → run each story in its own worktree
+  (`EnterWorktree`) driven by its own subagent, in parallel. Merge each worktree back
+  into the feature branch **one at a time**, running the verification gate before each
+  merge — never merge two stories concurrently, and never run two agents against the
+  same working tree (concurrent `git add`/commit from separate subagents in one
+  directory races on the git index — this is the exact failure GitHub Spec Kit's
+  maintainers cited when they kept worktree orchestration out of spec-kit's core:
+  `github/spec-kit#1476`).
+- **Any file path shared across stories** (e.g., a router both stories register into) →
+  those stories aren't independent regardless of the `[P]` marker — run them
+  sequentially in the main session instead.
+
+Within a single story, keep its own tasks — including ones marked `[P]` — in one agent /
+one session. A story's tasks share tight context (its own models, service, tests);
+splitting them by individual task adds coordination overhead without a real speed win.
+Reserve subagent/worktree fan-out for units large and independent enough to amortize that
+overhead — a user story is; a lone `[P]` task inside one story usually isn't.
+
+This is execution strategy only, layered on top of unmodified `speckit-implement`
+output. Spec Kit's maintainers deliberately keep git/worktree orchestration out of its
+core (delivered instead as an opt-in extension), so this logic lives here, in
+`CLAUDE.md`, not in `.claude/skills/speckit-implement/` or `.specify/`. Task phases, hook
+checks, dependency order, and completion criteria in
+`.claude/skills/speckit-implement/SKILL.md` are followed exactly, unmodified.
+
 ## Response style
 
 - **Caveman `full` is the default.** Dense, telegraphic, technically exact. Drop
