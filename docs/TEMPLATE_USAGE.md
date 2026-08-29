@@ -157,7 +157,8 @@ Spec Kit is installed here for three integrations. They share `.specify/` and co
 | **Claude Code** | `.claude/skills/`, `.claude/commands/`   | `/speckit.plan` (alias) or `/speckit-plan` (skill) |
 | **Cursor**      | `.cursor/skills/`, `.cursor/rules/`      | `speckit-plan` skill     |
 | **Cline**       | `.clinerules/workflows/`, `.clinerules/00-agents.md` | `/speckit-plan.md`  |
-| **Others**      | `AGENTS.md` (read by Copilot, Codex, Gemini, Amp, Zed…) | add with `specify integration install <key>` |
+| **Copilot**     | `.github/copilot-instructions.md` → `AGENTS.md`         | ambient; add prompts with `specify integration install copilot` |
+| **Others**      | `AGENTS.md` (read natively by Codex, Gemini, Amp, Zed…) | add with `specify integration install <key>` |
 
 Add another agent at any time:
 
@@ -282,7 +283,57 @@ Checklist before adding a skill:
 
 ---
 
-## 9. Troubleshooting
+## 9. Guardrails
+
+`AGENTS.md` §4 and §6 are rules an agent *can* ignore. These four files make the harness
+enforce them instead. All of them are inert until you point them at your project, so the
+template stays stack-agnostic.
+
+| File | Event | What it does |
+| ---- | ----- | ------------ |
+| `.claude/settings.json` | — | `permissions.deny` blocks reads of `.env*`, `*.pem`, `*.key`, `credentials*`, `id_rsa*`, `secrets/**`. Wires the two hooks below. |
+| `.claude/hooks/dangerous-actions-blocker.sh` | `PreToolUse(Bash)` | Refuses root-target `rm -rf`, raw disk writes, fork bombs, force-push to `main`/`master`/`develop`, and `npm`/`cargo` publish. |
+| `.claude/hooks/verification-gate.sh` | `Stop` | Runs lint then tests before the agent is allowed to finish. Exit 2 hands it the real output. |
+| `.pre-commit-config.yaml` | `git commit` | `detect-private-key`, `detect-aws-credentials`, `check-added-large-files`. |
+
+### Arming the verification gate
+
+Open the hook and set the two commands to the ones you put in `AGENTS.md` §1:
+
+```bash
+LINT_CMD="uv run ruff check ."
+TEST_CMD="uv run pytest -q"
+```
+
+Both empty → the gate exits 0 silently, which is the shipped state. It also skips when
+the working tree is clean (a question-and-answer turn shouldn't pay for the test suite)
+and honours `stop_hook_active`, so a failing suite can't put the agent in a loop.
+
+Prefer not to edit a tracked file? Set them in `.claude/settings.local.json` instead —
+copy `.claude/settings.local.json.example`, which is gitignored and also shows how to
+allowlist commands or disable an inherited hook on one machine.
+
+### Enabling the commit hooks
+
+```bash
+pre-commit install          # once per clone
+pre-commit run --all-files  # audit what is already tracked
+```
+
+### Notes
+
+- Both hooks need `jq`; without it they exit 0 rather than block. A guard that fails
+  open beats one that bricks the session.
+- Secret *reading* is handled by `permissions.deny`, not by grepping command text — that
+  is why the blocker doesn't reject commands containing `token=`. No false positives.
+- `curl … | sh` is deliberately allowed: `scripts/setup.sh` installs its own toolchain
+  that way.
+- Hook `timeout` in `settings.json` is **seconds**, not milliseconds.
+- To loosen or drop any of it, edit `.claude/settings.json` — it's your repo.
+
+---
+
+## 10. Troubleshooting
 
 | Symptom | Cause / fix |
 | ------- | ----------- |
@@ -296,11 +347,14 @@ Checklist before adding a skill:
 | `rtk: command not found` after install | Add `~/.local/bin` and `~/.cargo/bin` to PATH, or install via `brew install rtk`. Agents fall back to raw commands — nothing breaks. |
 | Caveman install fails | Needs Node ≥ 18. Verify with `node -v`; re-run `curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh \| bash`. |
 | Agent skips straight to code | Point it at `AGENTS.md` §2 and ask for `/speckit.specify` first. If it happens repeatedly, tighten the rule — don't repeat it every prompt. |
+| Agent says `BLOCKED by .claude/hooks/dangerous-actions-blocker.sh` | Working as intended — it hit a destructive command. If the pattern is wrong for your project, edit the hook. |
+| Every turn runs the test suite | The `Stop` gate is armed and your tree is dirty. Commit, or unset `LINT_CMD`/`TEST_CMD`. |
+| Agent can't read a file it should | A `permissions.deny` glob in `.claude/settings.json` matched it. Narrow the glob there. |
 | Spec Kit files look outdated | `uv tool install specify-cli --force && specify integration upgrade claude`. |
 
 ---
 
-## 10. Reference
+## 11. Reference
 
 - Spec Kit — <https://github.com/github/spec-kit>
 - RTK — <https://github.com/rtk-ai/rtk>

@@ -23,19 +23,22 @@ language, framework, or architecture.
 | **`CLAUDE.md`**            | Claude Code entry point; imports `AGENTS.md`                           |
 | **`.cursor/rules/`**       | Cursor rules (Karpathy + SDD workflow), always applied                 |
 | **`.clinerules/`**         | Cline rules + Spec Kit workflows                                       |
+| **Guardrails**             | Secret-read denies, a destructive-command blocker, a lint+test gate    |
 | **`scripts/setup.*`**      | Idempotent bootstrap for macOS/Linux/WSL and Windows                   |
 
 ```
 sdd-vibecoding-template/
 ├── .specify/          Spec Kit: constitution, templates, scripts, workflows
-├── .claude/           Claude skills (speckit-*) + /speckit.* command aliases
+├── .claude/           Claude skills (speckit-*), /speckit.* aliases,
+│                      settings.json (permission denies + hook wiring), hooks/
 ├── .cursor/           Cursor rules + Spec Kit skills
 ├── .clinerules/       Cline rules + Spec Kit workflows
+├── .github/           copilot-instructions.md
 ├── docs/TEMPLATE_USAGE.md
 ├── scripts/           setup.sh · setup.ps1
 ├── AGENTS.md          canonical agent contract
 ├── CLAUDE.md          Claude Code entry point (imports AGENTS.md)
-├── .editorconfig · .env.example · .gitignore · LICENSE
+├── .editorconfig · .env.example · .gitignore · .pre-commit-config.yaml · LICENSE
 ```
 
 ---
@@ -56,6 +59,10 @@ cd my-project
 
 # 3. Tell the agents what this project is
 $EDITOR AGENTS.md           # fill in §1: name, purpose, stack, run/test/lint commands
+
+# 3b. Arm the verification gate with the same commands (optional but recommended)
+$EDITOR .claude/hooks/verification-gate.sh   # set LINT_CMD and TEST_CMD
+pre-commit install                           # secret detection on every commit
 
 # 4. Open in your agent and start the flow
 claude                      # or Cursor / Cline / VS Code

@@ -16,7 +16,8 @@ secrets.*
 .pypirc
 
 # ─── AI agent local state ─────────────────────────────────────────────────────
-# Committed: .claude/skills, .claude/commands, .cursor/rules, .clinerules, AGENTS.md
+# Committed: .claude/skills, .claude/commands, .claude/settings.json, .claude/hooks,
+#            .cursor/rules, .clinerules, .github, AGENTS.md
 # Ignored: anything machine-local or credential-bearing.
 .claude/settings.local.json
 .claude/.credentials.json

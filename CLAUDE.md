@@ -84,6 +84,11 @@ never block on it.
 If any check failed, say which one and what the output was. Never report success you
 did not observe.
 
+Checks 1 and 2 are also enforced by the harness — `.claude/hooks/verification-gate.sh`
+on `Stop`, and `permissions.deny` plus `.pre-commit-config.yaml` for secrets. See
+[docs/TEMPLATE_USAGE.md](docs/TEMPLATE_USAGE.md) §9. A green hook is not a substitute
+for reading the output yourself.
+
 ## Extra skills
 
 Need a specialized capability (e.g. a niche framework, a data format, a review style)?

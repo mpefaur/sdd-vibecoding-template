@@ -1,0 +1,19 @@
+---
+# Last line of defence for AGENTS.md §6 — a secret that reaches git history is
+# already leaked, so the check belongs at the commit boundary, not only in the
+# agent's head.
+#
+#   pip install pre-commit && pre-commit install
+#   pre-commit run --all-files      # check what is already tracked
+#
+# Deliberately minimal: secrets only. Add your own lint/format hooks per §1.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: detect-private-key
+      - id: detect-aws-credentials
+        args: [--allow-missing-credentials]
+      - id: check-added-large-files
+        args: [--maxkb=1024]

@@ -56,6 +56,9 @@ A task is done only when a **real command** proves it — never "should work".
 - Run the project's test/lint/build commands from §1 and paste the actual result.
 - New behavior ships with a test that fails without the change.
 - If verification is impossible, say so explicitly instead of implying success.
+- Enforced, not trusted: `.claude/hooks/verification-gate.sh` runs lint and tests on
+  `Stop` and refuses the turn if either fails. Set `LINT_CMD` / `TEST_CMD` to the §1
+  commands to arm it; unset, it is a silent no-op.
 
 ## 5. Token discipline
 
@@ -73,6 +76,11 @@ A task is done only when a **real command** proves it — never "should work".
 - Secrets come from the environment or a secret manager at runtime.
 - Never print, log, or echo a secret's value — not even truncated.
 - Never disable auth, TLS verification, or security checks "to make it work".
+- Enforced, not trusted: `.claude/settings.json` denies reads of `.env*`, `*.pem`,
+  `*.key`, `credentials*`, `id_rsa*` and `secrets/**`; `.pre-commit-config.yaml`
+  catches private keys and AWS credentials at the commit boundary.
+- `.claude/hooks/dangerous-actions-blocker.sh` refuses irreversible commands
+  (root-target `rm -rf`, disk writes, force-push to a shared branch, publish).
 
 ## 7. Git
 
@@ -92,12 +100,14 @@ what is needed. Unused skills are pure context tax. Record every addition in §9
 
 ```
 .specify/        Spec Kit: constitution, templates, scripts, workflows
-.claude/         Claude Code: speckit skills + /speckit.* command aliases
+.claude/         Claude Code: speckit skills, /speckit.* aliases, settings.json, hooks/
 .cursor/rules/   Cursor rules (Karpathy + SDD workflow)
 .clinerules/     Cline rules + speckit workflows
+.github/         copilot-instructions.md — points Copilot at this file
 specs/           One directory per feature (created by /speckit.specify)
 scripts/         setup.sh / setup.ps1 — idempotent toolchain bootstrap
 docs/            Extended documentation
 AGENTS.md        This file — canonical contract
 CLAUDE.md        Claude Code entry point (imports this file)
+.pre-commit-config.yaml  Secret detection at the commit boundary (§6)
 ```
