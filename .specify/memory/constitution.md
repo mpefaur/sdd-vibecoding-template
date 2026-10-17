@@ -3,8 +3,8 @@
 <!--
   Base constitution shipped with sdd-vibecoding-template.
   Stack-agnostic and intentionally light: 5 principles you can defend in a code review.
-  Run /speckit.constitution to adapt it to your project, then bump the version below.
-  Every /speckit.plan and /speckit.analyze run is checked against this file.
+  Run /speckit-constitution to adapt it to your project, then bump the version below.
+  Every /speckit-plan and /speckit-analyze run is checked against this file.
 -->
 
 **Project**: `<PROJECT_NAME>`
@@ -58,21 +58,28 @@ on a clean machine.
 
 Every change must, before it is called complete:
 
-1. Trace to a task in the active feature's `tasks.md`.
-2. Pass the project's test, lint, and build commands (recorded in `AGENTS.md` §1).
+1. Trace to a task in the active feature's `tasks.md`, or to a bug report in
+   `.specify/bugs/<slug>/`.
+2. Pass `./scripts/verify.sh --full` — the test, lint, and build commands recorded in
+   `AGENTS.md` §1 — locally and in CI.
 3. Add or update tests covering the new behavior.
 4. Introduce no new secret, credential, or hardcoded environment value.
 5. Carry a [Conventional Commits](https://www.conventionalcommits.org/) message.
 
 ## Development Workflow
 
-`/speckit.constitution` → `/speckit.specify` → `/speckit.clarify` → `/speckit.plan` →
-`/speckit.tasks` → `/speckit.analyze` → `/speckit.implement`
+`/speckit-constitution` → `/speckit-specify` → `/speckit-clarify` → `/speckit-plan` →
+`/speckit-tasks` → `/speckit-analyze` → `/speckit-implement` ⇄ `/speckit-converge`
 
-One feature per branch (`<n>-<slug>`) and per `specs/` directory. `/speckit.clarify`
+One feature per branch (`<n>-<slug>`) and per `specs/` directory. `/speckit-clarify`
 runs before planning whenever the spec contains `[NEEDS CLARIFICATION]`;
-`/speckit.analyze` runs before implementing. Both are cheap next to reworking a
-misunderstood feature.
+`/speckit-analyze` runs before implementing. Both are cheap next to reworking a
+misunderstood feature. Implement and converge alternate until converge reports
+**Converged**.
+
+Bugs take the bug lane instead of a feature spec: `/speckit-bug-assess` →
+`/speckit-bug-fix` → `/speckit-bug-test`. The fix targets the assessed cause, and only a
+`verified` result closes the bug.
 
 ## Governance
 
@@ -83,4 +90,4 @@ under Complexity Tracking with its justification and the simpler alternative rej
 Agents load this file through `AGENTS.md` and must flag — not silently work around — a
 requested change that violates it.
 
-**Version**: 1.0.0 | **Ratified**: 2026-08-04 | **Last Amended**: 2026-08-04
+**Version**: 1.1.0 | **Ratified**: 2026-08-04 | **Last Amended**: 2026-10-07

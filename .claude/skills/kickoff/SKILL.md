@@ -17,7 +17,7 @@ the way.
 **You write configuration and documentation only. You do NOT scaffold the project.**
 No `package.json`, no `src/`, no framework `init`. `AGENTS.md` §2 forbids implementation
 before `tasks.md` exists, and that rule applies to you. The stack gets installed during
-`/speckit.implement`, from tasks that came from a spec.
+`/speckit-implement`, from tasks that came from a spec.
 
 ---
 
@@ -46,7 +46,7 @@ Present exactly this shape and stop:
 Propongo:
   Name:    habit-tracker
   Purpose: Web app that logs daily habits and shows streaks.
-  Stack:   TypeScript · Next.js 15 · SQLite/Drizzle · Vitest · Biome
+  Stack:   TypeScript · Next.js 16 · SQLite/Drizzle · Vitest · Biome
   Run:     pnpm dev
   Test:    pnpm vitest run
   Lint:    pnpm biome check .
@@ -74,17 +74,34 @@ Rules for this step:
 
 Leave §2–§9 untouched. They are the contract, not template scaffolding.
 
-## Step 3 — Arm the verification gate
+## Step 3 — Arm verification (one script, three callers)
 
-In `.claude/hooks/verification-gate.sh`, set the two variables to the §1 commands:
+In `scripts/verify.sh`, set the three variables to the §1 commands:
 
 ```bash
 LINT_CMD="${LINT_CMD:-pnpm biome check .}"
 TEST_CMD="${TEST_CMD:-pnpm vitest run}"
+BUILD_CMD="${BUILD_CMD:-pnpm build}"
 ```
 
 Keep the `${VAR:-default}` form so an env var or `.claude/settings.local.json` can still
-override per machine.
+override per machine. The `Stop` hook, the `verify` skill and CI all call this script —
+do not copy the commands anywhere else.
+
+In `.github/workflows/ci.yml`, add the stack's toolchain setup to the `verify` job, before
+the `Verify` step (e.g. `pnpm/action-setup` + `actions/setup-node`, or
+`astral-sh/setup-uv`). Pin each action by full commit SHA with the version in a comment,
+like the existing `actions/checkout` line — look the SHA up (`gh api
+repos/<owner>/<action>/git/ref/tags/<tag>`), never invent one. Dependabot keeps them
+current.
+
+The Bash sandbox starts with no network domains allowed. If the stack's package registry
+is known (`registry.npmjs.org`, `pypi.org` + `files.pythonhosted.org`, `crates.io`, …),
+add it to `sandbox.network.allowedDomains` in `.claude/settings.json` so installs don't
+prompt every time. Likewise add the package manager's cache to
+`sandbox.filesystem.allowWrite` (`~/.cache/uv`, `~/.npm`, `~/Library/pnpm`,
+`~/.cargo/registry`, …) — the sandbox only lets commands write inside the repo and temp
+dir, so `uv run` or `npm ci` otherwise fail with `Operation not permitted`.
 
 Then verify the *tools* resolve — the suites cannot pass yet, there is no code:
 
@@ -97,11 +114,13 @@ Report honestly. A missing tool is a note for the user, not a reason to change �
 ## Step 4 — Enable the commit hooks
 
 ```bash
-pre-commit install
+pre-commit install --install-hooks
 ```
 
-If `pre-commit` is not installed, do not fail: tell the user the one-liner
-(`pip install pre-commit && pre-commit install`, or `uvx pre-commit install`) and move on.
+This writes `.git/hooks/` and downloads the Betterleaks hook, both of which the Bash
+sandbox refuses; expect the unsandboxed-retry prompt. If `pre-commit` is not installed,
+do not fail: tell the user the one-liner (`uv tool install pre-commit && pre-commit
+install --install-hooks`) and move on.
 
 ## Step 5 — Rewrite the README
 
@@ -138,7 +157,7 @@ the remote). Do **not** commit — `AGENTS.md` §7: never commit unless asked. O
 
 Then continue straight into the flow, without waiting for another prompt:
 
-1. `/speckit.constitution` — adapt the base constitution to this project.
-2. `/speckit.specify` — pass the user's original description through as the first feature.
+1. `/speckit-constitution` — adapt the base constitution to this project.
+2. `/speckit-specify` — pass the user's original description through as the first feature.
 
-From there the normal cycle applies: `clarify → plan → tasks → analyze → implement`.
+From there the normal cycle applies: `clarify → plan → tasks → analyze → implement ⇄ converge`.
