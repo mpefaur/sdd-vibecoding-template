@@ -14,7 +14,7 @@
 
 ## H0 — Hello world deployed
 
-- [ ] H001 [@[handle]] [slice: 0. app is reachable] [≤60m] Deploy a hello-world build to the deploy target — paths: [glob]
+- [ ] H001 [@[handle]] [slice: 0. app is reachable] [≤60m] Deploy a hello-world build to the deploy target and replace the demo-check stub with its first real step (the app answers) — paths: [glob]
 
 ## Slices — in demo order
 

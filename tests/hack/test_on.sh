@@ -21,6 +21,11 @@ inst = json.load(open(".specify/integration.json"))["installed_integrations"]
 print(" ".join(k for k in inst if "speckit.hack.guard" not in reg.get(k, [])))')
 assert_eq "$missing" "" "hack commands registered for every installed integration"
 assert_file .specify/extensions/hack/scripts/hack.sh
+# Spec Kit rewrites every `scripts/…` mention in command bodies into the extension directory,
+# so every rewritten path must exist there (found in manual scenario M4).
+for ref in $(grep -ho '\.specify/extensions/hack/scripts/[a-z.]*' .claude/skills/speckit-hack-*/SKILL.md .cursor/skills/speckit-hack-*/SKILL.md .clinerules/workflows/speckit-hack-*.md | sort -u); do
+  [[ -x "$ref" ]] && _pass "generated commands reference an existing $ref" || _fail "generated commands reference a missing $ref"
+done
 [[ -x .specify/scripts/bash/common.sh ]] && _pass "Spec Kit scripts keep their executable bit" || _fail "common.sh lost its executable bit"
 git diff --quiet HEAD -- .claude/skills/speckit-github-taskstoissues/SKILL.md \
   && _pass "existing Spec Kit commands are not regenerated" || _fail "speckit-github-taskstoissues/SKILL.md changed"

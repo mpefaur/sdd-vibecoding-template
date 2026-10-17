@@ -31,6 +31,9 @@ exit from hackathon mode, and it is one-way.
    - hackathon mode cannot be re-entered.
 4. Run `{SCRIPT} --lint "<cmd>" --test "<cmd>" [--build "<cmd>"] [--code-repo <path>]` and
    report its output verbatim. If it fails, it rolls everything back and names the step.
+   **Do not install tools** (no `pip`, `npm` or `brew` installs) to make the new commands
+   pass: if a lint or test tool is missing, say so and give the install command. The
+   project's setup is the user's call.
    Expect permission prompts: it writes `.claude/settings.json` and `.claude/skills/`.
 5. Next steps: `/speckit-converge`, which adopts the existing code and the inherited debt into
    the full flow, then `/speckit-constitution` if the project needs its own principles. Do

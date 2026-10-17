@@ -4,56 +4,70 @@ Status of [quickstart.md](quickstart.md) on branch `001-hackathon-mode`, 2026-10
 
 ## Automated — `tests/hack/run.sh` (A1–A15)
 
-```text
-PASS test_check            A5, A7 (+ check under 2 s with 10,000 files)
-PASS test_coordinating     A14
-PASS test_expiry           A10
-PASS test_full_mode_unchanged  A13
-PASS test_graduate         A12
-PASS test_guard            A3, A4 (TTY sub-case skipped: no pseudo-terminal in this environment)
-PASS test_issues           T033 (missing-gh sub-case runs only where gh is not in /usr/bin:/bin)
-PASS test_mode_record      T009
-PASS test_on               A1, A2, rollback
-PASS test_precommit        A6
-PASS test_secrets          A15
-PASS test_status_notices   A11, notices part of A1
-PASS test_verify           A8, A9
-13 passed, 0 failed   (macOS, bash 3.2 tests run via bash, Spec Kit 1.1.1, pre-commit 4.6.2; 77 s)
-```
+13 tests, all passing (macOS, Spec Kit 1.1.1, pre-commit 4.6.2): `test_check`,
+`test_coordinating`, `test_expiry`, `test_full_mode_unchanged`, `test_graduate`,
+`test_guard`, `test_issues`, `test_mode_record`, `test_on`, `test_precommit`, `test_secrets`,
+`test_status_notices`, `test_verify`.
 
-Other checks:
-- `shellcheck -S warning` on `scripts/hack.sh`, `scripts/verify.sh`, `tests/hack/*.sh` and the
-  extension shim: clean.
-- `betterleaks dir .`: no leaks.
-- `./scripts/verify.sh --full` in the template prints "no commands configured", which is
-  **not a pass**. That is expected for the unconfigured template (plan, Complexity Tracking);
-  `tests/hack/run.sh` is the proof.
+- Two sub-cases depend on the environment and say so when skipped: the TTY guard case (needs
+  a pseudo-terminal) and "issues without gh" (only where `gh` is not in `/usr/bin:/bin`).
+- `shellcheck -S warning`: clean. `betterleaks dir .`: no leaks.
+- `./scripts/verify.sh --full` in the template prints "no commands configured". That is **not
+  a pass**; it is expected for the unconfigured template (plan, Complexity Tracking).
 
 ## Manual — M1–M11
 
-Evidence gathered **without** a live agent UI: in an activated scratch clone, Spec Kit's own
-dispatcher (`.specify/events.py`) was run exactly as the installed native hooks call it.
+Run against real tools on 2026-10-17:
+- **Claude Code sessions**: `claude -p` 2.1.293, in throwaway clones with the sandbox off
+  through a git-ignored `settings.local.json`.
+- **GitHub repositories**: public scratch repositories `mpefaur/hack-mode-scratch` and
+  `mpefaur/hack-mode-event-scratch`.
 
-| # | Status | Evidence / what is still needed |
+| # | Result | Observed |
 |---|---|---|
-| M1 Claude Code | **Partial** | `UserPromptSubmit` → `python3 .specify/events.py speckit.hack.guard user_prompt_submit 10` with `{"prompt":"/speckit-clarify auth?"}` exits **2** with the redirect; with a plain prompt it exits 0. `SessionStart` prints the status banner. Claude Code blocks on exit 2 by its hook contract. **Needed**: one real session to see the banner and the refusal in the UI. |
-| M2 Cursor | **Partial — open item** | `beforeSubmitPrompt` (`suppress` envelope) exits **2** with the redirect; `sessionStart` emits `{"additional_context": …}`. The generated Cursor `speckit-specify` skill reads `hooks.before_specify`, which contains the mandatory `speckit.hack.guard`. **Needed**: confirm Cursor blocks a prompt on exit 2 (research "Spike results", T003b). |
-| M3 Cline | **Partial** | `.clinerules/workflows/speckit-hack-guard.md` is generated with the shim path, and Cline's `speckit-plan` workflow reads the same `before_plan` hook. **Needed**: one real Cline run to see it stop. |
-| M4 Sprint + issues | Pending | Needs a scratch GitHub repository (creating one is outward-facing: ask first). `issues` is covered against a `gh` stub in `test_issues`. |
-| M5 Required checks | Pending | Needs a scratch GitHub repository with admin rights. |
-| M6 3-person dry run | Pending | Needs people. Include one Cline teammate; time the CI verdict (SC-006). |
-| M7 Coordinating vs real fork | Pending | Covered with local bare repositories in `test_coordinating`; needs a real fork whose default branch is not `main`, timed (SC-011). |
-| M8 `/hack-kickoff` | Pending | Needs a fresh clone and a Claude Code session, timed (SC-001). |
-| M9 `/kickoff` refusal and cleanup | Pending | Needs a Claude Code session. The skill text now refuses in hackathon mode and removes the R16 items. |
-| M10 `/speckit-hack-graduate` | Pending | The script path is covered by `test_graduate`; needs the agent flow (question, confirmation). |
-| M11 `/speckit-hack-demo` | Pending | Needs a sprint's spec to turn into `demo.md`. |
+| M1 Claude Code | **PASS** | Typing `/speckit-clarify …` was refused by the native `UserPromptSubmit` hook with the redirect. The session-start context reported the mode and the active spec. When the agent invoked `speckit-specify` **on its own**, the skill ran the mandatory `before_specify` guard, which exited 2. The agent stopped without creating anything and pointed to `/speckit-hack-sprint` and `/speckit-hack-graduate`. |
+| M2 Cursor | **Not run** | The `cursor-agent` CLI is not installed here. Evidence up to the agent boundary: Cursor's `beforeSubmitPrompt` dispatch exits 2 with the redirect, `sessionStart` emits `{"additional_context": …}`, and the generated Cursor skills read the mandatory hooks. **Open**: confirm that Cursor blocks a prompt on exit 2. |
+| M3 Cline | **Not run** | No Cline CLI here. Evidence: the generated `.clinerules/workflows/speckit-hack-*.md` and the shared `before_*` hooks. |
+| M4 Sprint + issues | **PASS — 159 s** from activation | One pass wrote `spec.md`, `plan.md` and `tasks.md`, and published 4 issues assigned to the owner. SC-002 (under 60 min): met. |
+| M5 Required checks | **PASS** | `on --require-check` created branch protection with `secrets` and `verify`. A teammate without local hooks opened PR #5 with `specs/002-dark-mode/`: the `verify` job failed in 5 s ("only one spec per hackathon project…") and GitHub reported `mergeStateStatus: BLOCKED`. SC-004 and SC-006: met. |
+| M6 3-person dry run | **Not run** | Needs people. Partial coverage: M5 plays a teammate without hooks, and M1 a teammate's agent. |
+| M7 Coordinating vs a real repo whose default branch is `trunk` | **PASS — 27 s** (script path) | The commit in the event clone ran the secret scan and `hackathon mode check (ev, local-only)`. The push printed `target branch: trunk` and the local-only warning. Nothing was committed to the event repository. SC-011: met. |
+| M8 `/hack-kickoff` | **PASS — 132 s** | One proposal block, waited for confirmation, activated, pinned `actions/setup-python` by SHA looked up with `gh api`, no scaffolding. SC-001: met. **Found 2 gaps, both fixed** (below). |
+| M9 `/kickoff` | **PASS** | In an activated clone, `/kickoff` was refused at prompt time with the redirect. On a fresh clone, a full adoption removed `specs/`, `scripts/hack.sh`, `tests/hack/`, `.specify/hack/`, `.claude/skills/hack-kickoff/` and every marked block in `AGENTS.md`, `verify.sh` and CI. Inert leftovers: one `.gitignore` line, the constitution's "Hackathon Mode" section, and the template docs. |
+| M10 `/speckit-hack-graduate` | **PASS** | The mode record and tooling were removed, and the debt became task `T9001` under `## Inherited debt`. `verify.sh` ran lint and tests in full mode. **Found 1 gap, fixed** (below). |
+| M11 `/speckit-hack-demo` | **PASS** | `demo.md` with run-sheet, seed data, fallback recording, freeze, runtime check and rehearsal checklist; `check` still passes. |
+
+## Gaps found by the manual runs, and their fixes
+
+1. **M8 — no demo-check stub.** Right after activation, `verify` fails, because the smoke
+   command points at a file nobody has created yet; the Stop hook would block every turn.
+   *Fix*: `/hack-kickoff` Step 3 creates a minimal passing stub (verification configuration,
+   not application code), and the `H0` work item replaces it with the first real step.
+2. **M8 — no commit hooks.** `/hack-kickoff` did not run `pre-commit install`, unlike
+   `/kickoff` Step 4. *Fix*: added to Step 3.
+3. **M4 — broken paths in command bodies.** Spec Kit rewrites every `scripts/…` mention in a
+   command body into the extension directory, so the sprint told the team to run a
+   non-existent `.specify/extensions/hack/scripts/verify.sh`. *Fix*: a `verify.sh` shim beside
+   the `hack.sh` shim, and `test_on` now asserts that every rewritten path exists.
+4. **M4 — issue titles too long.** A long work-item description exceeded GitHub's
+   256-character title limit. *Fix*: `issues` truncates titles to 80 characters and puts
+   the full description in the issue body (covered in `test_issues`).
+5. **M10 — the agent installed a tool.** To make the new lint command pass, the session
+   installed `pyflakes` into the user's Python (reverted the same day). *Fix*: the graduate
+   command now forbids installing tools; it reports missing ones instead.
+6. **M9 — redundant refusal text** for `/kickoff`. *Fix*: reworded.
 
 ## Known side effects (documented, not failures)
 
 - Spec Kit rewrites `.claude/settings.json` when it installs native hooks, reformatting the
-  one-line `allowWrite` array. The JSON is equivalent, and graduation leaves it reformatted.
-- Activation registers the `bug` and `github` extensions for Cursor and Cline as well
-  (Spec Kit's per-agent registration). Those commands are blocked by the check in hackathon
-  mode, and stay available after graduation.
-- pre-commit stores the event-repository config path relative to the event clone. Moving the
-  coordinating project or the clones means re-running `scripts/hack.sh hooks`.
+  one-line `allowWrite` array. The JSON is equivalent.
+- Activation registers the `bug` and `github` extensions for Cursor and Cline too
+  (Spec Kit's per-agent registration).
+- pre-commit stores the event-repository config path relative to the event clone, so moving
+  either side means re-running `scripts/hack.sh hooks`.
+
+## Still open before calling T062 complete
+
+- M2 (Cursor) and M3 (Cline) in real sessions. Above all, confirm that Cursor honors exit 2
+  on `beforeSubmitPrompt`.
+- M6 with real people.

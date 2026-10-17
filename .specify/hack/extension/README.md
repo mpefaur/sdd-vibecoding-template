@@ -14,9 +14,9 @@ rationale: `specs/001-hackathon-mode/` in the template repository.
   or not, when it refreshes native events, so keeping the source there would leak the hack
   events into full-mode projects. And `specify extension remove` deletes the installed
   directory.
-- Spec Kit rewrites `scripts/…` paths in command files into the extension directory, so
-  `scripts/hack.sh` here is a shim that execs the repository-root `scripts/hack.sh`, where all
-  logic lives.
+- Spec Kit rewrites every `scripts/…` path in command files (frontmatter and body) into the
+  extension directory. So `scripts/hack.sh` and `scripts/verify.sh` here are shims that exec
+  the repository-root scripts, where all logic lives.
 
 ## What it provides
 

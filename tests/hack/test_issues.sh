@@ -12,10 +12,13 @@ cat >"$feature/tasks.md" <<'MD'
 - [ ] H001 [@alice] [slice: 1. sign in] [≤60m] Login endpoint — paths: api/auth/**
 - [ ] H002 [@alice] [slice: 2. see the feed] [≤90m] Feed endpoint — paths: api/feed/**
 - [ ] H003 [@bob] [slice: 2. see the feed] [≤90m] Feed page — paths: web/feed/**
+- [ ] H005 [@bob] [slice: 2. see the feed] [≤30m] Feed page empty state that explains to a first-time visitor why the feed is empty and how to follow someone to fill it — paths: web/feed/**
 MD
 
 LOG="$HACK_TEST_TMP/gh-calls-$$.log"; : >"$LOG"
+TITLES="$HACK_TEST_TMP/gh-titles-$$.log"; : >"$TITLES"
 stub_bin gh "echo \"\$*\" >> '$LOG'
+prev=''; for a in \"\$@\"; do [[ \"\$prev\" == --title ]] && echo \"\$a\" >> '$TITLES'; prev=\$a; done
 case \"\$1 \$2\" in
   'issue list') echo '[{\"title\": \"H001 Login endpoint\"}]' ;;
   'issue create') echo 'https://github.com/example/repo/issues/9' ;;
@@ -30,7 +33,10 @@ assert_contains - "--assignee bob"
 assert_eq "$(grep -c '^issue create' "$LOG")" "0" "--dry-run creates nothing"
 
 assert_exit 0 scripts/hack.sh issues
-assert_eq "$(grep -c '^issue create' "$LOG")" "2" "creates exactly the two missing issues"
+assert_eq "$(grep -c '^issue create' "$LOG")" "3" "creates exactly the three missing issues"
+long_title=$(grep '^H005' "$TITLES")
+[[ ${#long_title} -le 100 ]] && _pass "long descriptions are truncated in the issue title" || _fail "title too long: $long_title"
+assert_contains "$LOG" "how to follow someone to fill it"
 assert_contains "$LOG" "--assignee bob"
 
 # A work item whose owner does not own its paths is refused, naming it.

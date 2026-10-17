@@ -272,6 +272,10 @@ Run against Spec Kit 1.1.1 in a throwaway clone of this repository.
   two-line shim, `scripts/hack.sh`, that execs the repository-root `scripts/hack.sh` (resolved
   with `git rev-parse --show-toplevel`). The repo-root script stays the single home of the
   logic (FR-017).
+  - **Also in command bodies (found in manual scenario M4)**: `rewrite_extension_paths`
+    rewrites every `scripts/…` or `./scripts/…` mention in a command body, because the
+    extension has a `scripts/` directory. So the extension also ships a `scripts/verify.sh`
+    shim, and `test_on` asserts that every rewritten path in the generated commands exists.
 - **Registration across agents (T002a)**: `specify extension add --dev <dir>` registers
   commands for the **default integration only** (`registered_commands: {claude: [...]}`), but
   writes native events for every events-capable installed integration (Claude

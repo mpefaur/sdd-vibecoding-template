@@ -105,6 +105,15 @@ Expect permission prompts: it writes `.claude/settings.json` (native hooks) and
 - `.claude/settings.json`: add the package registry to `sandbox.network.allowedDomains` and
   the package-manager cache to `sandbox.filesystem.allowWrite`.
 - Check the tools resolve (`command -v <tool>`), and report any missing ones.
+- **Demo-check stub**: if the confirmed smoke command runs a file that does not exist yet,
+  create it as a minimal stub in the stack's language that prints `smoke: no demo steps yet`
+  and exits 0. Without it, `scripts/verify.sh`, and so the Stop hook and CI, fail from the
+  first turn. This is verification configuration, like `scripts/verify.sh`, not application
+  code: the `H0` work item replaces it with the first real demo step.
+- Commit hooks, as `/kickoff` Step 4: `pre-commit install --install-hooks`. It writes
+  `.git/hooks/`, so expect the unsandboxed-retry prompt. If `pre-commit` is missing, tell
+  the user `uv tool install pre-commit && pre-commit install --install-hooks` and move on.
+- Run `./scripts/verify.sh --full` and quote its last line; it must end with `verify: OK`.
 
 ## Step 4 — Report and hand off
 
