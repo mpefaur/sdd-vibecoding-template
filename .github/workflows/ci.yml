@@ -51,3 +51,36 @@ jobs:
       # pinned by commit SHA like the checkout step above.
       - name: Verify
         run: ./scripts/verify.sh --full
+      # hackathon-mode:begin — warn when a PR crosses path owners (scripts/hack.sh check
+      # --changed). Never fails the build. Removed by graduate and by /kickoff.
+      - name: Hackathon ownership warning
+        if: github.event_name == 'pull_request' && hashFiles('.specify/mode.json') != ''
+        continue-on-error: true
+        run: |
+          git fetch --no-tags --depth=1 origin "+refs/heads/${GITHUB_BASE_REF}:refs/remotes/origin/base"
+          git diff --name-only origin/base HEAD | xargs scripts/hack.sh check --changed
+      # hackathon-mode:end
+
+  # template-only:begin — the template's own self-tests. /kickoff and `scripts/hack.sh on`
+  # delete this block on adoption, so adopted projects never run it (research R13, R16).
+  template-selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Detect the unadopted template
+        id: template
+        run: |
+          if grep -q '^## 0. First run' AGENTS.md; then echo "run=true" >> "$GITHUB_OUTPUT"; fi
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        if: steps.template.outputs.run == 'true'
+      - name: Install pinned tools
+        if: steps.template.outputs.run == 'true'
+        run: |
+          uv tool install "specify-cli==$(sed -n 's/^SPECKIT_VERSION="\(.*\)"/\1/p' scripts/setup.sh)"
+          uv tool install pre-commit==4.6.2
+      - name: Hackathon mode self-tests
+        if: steps.template.outputs.run == 'true'
+        run: tests/hack/run.sh
+  # template-only:end

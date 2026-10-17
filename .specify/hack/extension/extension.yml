@@ -1,0 +1,54 @@
+schema_version: "1.0"
+
+extension:
+  id: hack
+  name: "Hackathon Mode"
+  version: "1.0.0"
+  description: "Reduced SDD flow for 24–48h team hackathons: one demo-centered spec, owner-assigned work items, demo-check definition of done"
+  author: sdd-vibecoding-template
+  license: MIT
+
+# Installed only by `scripts/hack.sh on` and removed by `scripts/hack.sh graduate`.
+# Source lives outside .specify/extensions/ on purpose — see README.md.
+requires:
+  speckit_version: ">=1.1.1"
+
+provides:
+  commands:
+    - name: speckit.hack.sprint
+      file: commands/speckit.hack.sprint.md
+      description: "Hackathon mode: write the one demo-centered spec, plan and tasks in one pass, then publish assigned issues"
+    - name: speckit.hack.demo
+      file: commands/speckit.hack.demo.md
+      description: "Hackathon mode: turn the demo script into a stage run-sheet (demo.md)"
+    - name: speckit.hack.status
+      file: commands/speckit.hack.status.md
+      description: "Hackathon mode: show the mode, the active spec and the definition of done"
+    - name: speckit.hack.guard
+      file: commands/speckit.hack.guard.md
+      description: "Hackathon mode: refuse full-flow and bug-lane commands with a redirect"
+    - name: speckit.hack.graduate
+      file: commands/speckit.hack.graduate.md
+      description: "Hackathon mode: leave the mode and hand the project to the full flow"
+
+# Mandatory and unconditional: generated commands skip hooks that carry a `condition`,
+# so the mode check lives inside the guard (research R4).
+hooks:
+  before_constitution: { command: speckit.hack.guard, optional: false, description: "Hackathon mode: the constitution is fixed" }
+  before_specify: { command: speckit.hack.guard, optional: false, description: "Hackathon mode: use /speckit-hack-sprint" }
+  before_clarify: { command: speckit.hack.guard, optional: false, description: "Hackathon mode: assumptions replace clarification" }
+  before_plan: { command: speckit.hack.guard, optional: false, description: "Hackathon mode: use /speckit-hack-sprint" }
+  before_tasks: { command: speckit.hack.guard, optional: false, description: "Hackathon mode: use /speckit-hack-sprint" }
+  before_analyze: { command: speckit.hack.guard, optional: false, description: "Hackathon mode: analysis is skipped" }
+  before_checklist: { command: speckit.hack.guard, optional: false, description: "Hackathon mode: checklists are skipped" }
+  before_implement: { command: speckit.hack.status, optional: false, description: "Hackathon mode: sync the active spec pointer" }
+  before_converge: { command: speckit.hack.status, optional: false, description: "Hackathon mode: sync the active spec pointer" }
+
+# Native agent hooks (Claude Code, Cursor) installed by Spec Kit (research R3).
+events:
+  session_start: { command: speckit.hack.status, timeout: 10 }
+  user_prompt_submit: { command: speckit.hack.guard, timeout: 10 }
+
+tags:
+  - "hackathon"
+  - "workflow"

@@ -23,6 +23,10 @@ before `tasks.md` exists, and that rule applies to you. The stack gets installed
 
 ## Step 0 — Check this repo still needs adopting
 
+If `.specify/mode.json` exists, the project is in **hackathon mode**: say "this project is
+in hackathon mode; a project's mode is chosen once, and the only exit is
+`/speckit-hack-graduate`", run `scripts/hack.sh status`, and stop.
+
 ```bash
 grep -c '<PROJECT_NAME>\|<ONE_SENTENCE>\|<LANGUAGES / FRAMEWORKS>\|<COMMAND>' AGENTS.md
 ```
@@ -72,6 +76,15 @@ Rules for this step:
 2. Delete the `> Replace the <PROJECT> placeholders…` admonition near the top.
 3. Delete the whole `## 0. First run` section — it has served its purpose, and leaving it
    in means every future session is told to run this skill again.
+4. Delete every directory under `specs/` — a fresh clone has no project specs; these are
+   the template's own feature history.
+5. Remove the template-only hackathon tooling, which a full-mode project never uses:
+   `.claude/skills/hack-kickoff/`, `.specify/hack/`, `scripts/hack.sh`, `tests/hack/`, and
+   in `.github/workflows/ci.yml` the blocks between `# template-only:begin` /
+   `# template-only:end` and `# hackathon-mode:begin` / `# hackathon-mode:end`. Also remove
+   the hackathon branch from `scripts/verify.sh` (the block between `# hackathon-mode:begin`
+   and `# hackathon-mode:end`) and, in `AGENTS.md`, the lines between
+   `<!-- template-only:begin -->` and `<!-- template-only:end -->`.
 
 Leave §2–§9 untouched. They are the contract, not template scaffolding.
 

@@ -116,3 +116,6 @@ Desktop.ini
 *.tfstate.*
 *.tfvars
 !*.tfvars.example
+
+# Hackathon mode — machine-local state (scripts/hack.sh hooks)
+.specify/hack/local/

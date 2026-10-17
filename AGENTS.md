@@ -59,6 +59,10 @@ Rules:
 - Bugs take the bug lane, not a full spec: assess the cause, fix that cause, test the
   original symptom. A `failed` or missing verification is not a fix.
 - Scope changes go back to the spec — do not silently widen the work.
+<!-- template-only:begin -->
+- Team hackathon (2–5 people, 24–48 h)? Adopt with `/hack-kickoff` instead: a reduced flow
+  (`docs/TEMPLATE_USAGE.md` §10). Tooling `scripts/hack.sh`, `.specify/hack/`, `tests/hack/`.
+<!-- template-only:end -->
 
 ## 3. Behavior — Karpathy principles
 

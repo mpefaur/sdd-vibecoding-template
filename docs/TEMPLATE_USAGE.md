@@ -411,7 +411,118 @@ A reviewed false positive goes into `.betterleaksignore` as its fingerprint
 
 ---
 
-## 10. Troubleshooting
+## 10. Hackathon mode
+
+A reduced Spec-Driven flow for **teams of 2–5 with 24–48 hours**, building a proof of
+concept that only has to work on the happy path and be shown live on stage. It is an
+alternate *adoption*, not a switch: a project's mode is chosen once, and the only exit is
+graduation. Production projects never see it.
+
+### When to use it
+
+| Use hackathon mode | Use the full flow |
+|---|---|
+| Fixed 24–48 h window, live demo at the end | Anything meant to reach production |
+| Happy path only, seeded data | Edge cases, error handling, test suites matter |
+| 2–5 people working in parallel from hour one | Longer timelines or larger teams |
+
+### Activation (once, on a fresh clone)
+
+```
+/hack-kickoff <the event and what you will build>
+```
+
+Other agents run the same thing by hand, as `scripts/hack.sh on --event … --ends-at …
+--stack … --run … --build <cmd|none> --smoke <cmd|manual> --spec-owner … --owner
+<handle>=<glob> …` (see `scripts/hack.sh` and `specs/001-hackathon-mode/contracts/hack-cli.md`).
+The stack is whatever the event imposes.
+
+Activation:
+- writes the committed mode record (`.specify/mode.json`);
+- fills AGENTS.md §1;
+- installs the `hack` Spec Kit extension for Claude Code, Cursor and Cline;
+- adds a notice to every agent instruction file;
+- adds the `hack-check` commit hook;
+- optionally makes the `secrets` and `verify` checks required before merging.
+
+Commit the result. It refuses a dirty tree and rolls back on any failure.
+
+### Working as a team
+
+1. The **spec owner** runs `/speckit-hack-sprint` with the idea. One pass produces the one
+   spec (centered on the **demo script**), a one-page plan (integration contract, ownership
+   map) and `tasks.md`. Each work item is published as an issue, assigned by path ownership.
+2. Every teammate pulls and runs `scripts/hack.sh status`, also before `/speckit-implement`,
+   because it syncs the active-spec pointer. Then they work only on their issues and their
+   paths. The CI warns when a PR crosses owners.
+3. **Done** = `scripts/verify.sh --full`: the check, the demo check (`--smoke`), and the
+   build. The demo check grows **one step per slice**, so it stays green at every
+   checkpoint. A `manual` demo check (mobile, hardware) is reported as MANUAL, never as
+   passed.
+4. Shortcuts go to the spec's `debt.md` as
+   `- D<NNN> | <shortcut> | where: <path> | why: <reason> | repay: <what full mode needs>`.
+5. Before the freeze, `/speckit-hack-demo` writes the stage run-sheet (`demo.md`).
+
+Disabled while the mode is active: the full-flow commands (`/speckit-constitution`,
+`-specify`, `-clarify`, `-plan`, `-tasks`, `-analyze`, `-checklist`), the bug lane, and
+`/kickoff`. Bugs are fixed directly once the demo check reproduces them; otherwise they go
+to `debt.md`. `/speckit-implement` and `/speckit-converge` stay available.
+
+### What enforces it
+
+| Layer | Who it covers |
+|---|---|
+| `scripts/hack.sh check` in pre-commit and in CI (`scripts/verify.sh`) | **Everyone, any agent or none.** It rejects a second spec, any file other than `spec.md`, `plan.md`, `tasks.md`, `demo.md`, `debt.md` in the spec directory, bug-lane output, and edits to the hackathon constitution |
+| Mandatory Spec Kit hooks before the full-flow commands | Claude Code, Cursor, Cline |
+| Session-start banner and refusal of typed commands | Claude Code, Cursor |
+| Notices in `AGENTS.md`, Copilot, Cursor and Cline instruction files | Every agent that reads them |
+
+Make the `secrets` and `verify` checks required before merging (offered at activation),
+or the CI layer only reports.
+
+### Organizer-provided repositories (coordinating variant)
+
+When the event hands you the code repository (often a fork with its own default branch),
+adopt this template as a separate **coordinating project**: the spec, plan and issues live
+here, and the code lives in the event repositories. Pass `--variant coordinating
+--event-repo <name>=<path>,<url>,<target-branch>`, and prefix owner paths with
+`<name>:`. Each teammate runs `scripts/hack.sh hooks` once per machine. That installs secret
+scanning and a check rejecting Spec Kit artifacts in each event clone, without committing
+anything there, and prints the target branch on every push. **Enforcement in event
+repositories is local-only and can be bypassed.** Status and notices say so.
+
+### Graduation
+
+If the proof of concept is worth continuing, run `/speckit-hack-graduate`, on the default
+branch with a clean tree, giving the real lint and test commands. It:
+- sets the commands in `scripts/verify.sh` and AGENTS.md §1;
+- turns every `debt.md` line into a task under `## Inherited debt`;
+- removes the extension, its hooks, the notices, the commit hook and the hackathon tooling.
+
+Then run `/speckit-converge`. The project is now a normal full-mode project, and cannot
+re-enter hackathon mode.
+
+### Changing the end time
+
+`ends_at` only drives a warning (after it, every status, check and CI run says to graduate
+or archive; nothing is blocked). To change it, edit `.specify/mode.json` and run
+`scripts/hack.sh check` to validate it.
+
+### Known limits
+
+- Cline has no native hooks: it gets the mandatory Spec Kit hooks and the notices.
+- The bug-lane commands have no hook points. When an agent invokes them on its own, only
+  the check catches it, by rejecting `.specify/bugs/` content.
+- Codex, Copilot and Gemini get the notices and CI, unless their Spec Kit integration is
+  installed.
+- No PowerShell parity: use Git Bash or WSL on Windows (as for `scripts/verify.sh`).
+- Activation re-registers the `bug` and `github` extensions for Cursor and Cline as a side
+  effect of Spec Kit's per-agent registration. That is harmless; it makes them available
+  there after graduation.
+
+---
+
+## 11. Troubleshooting
 
 | Symptom | Cause / fix |
 | ------- | ----------- |
@@ -437,7 +548,7 @@ A reviewed false positive goes into `.betterleaksignore` as its fingerprint
 
 ---
 
-## 11. Reference
+## 12. Reference
 
 - Spec Kit — <https://github.com/github/spec-kit>
 - RTK — <https://github.com/rtk-ai/rtk>
