@@ -12,7 +12,7 @@ for id in constitution specify clarify plan tasks analyze checklist bug.assess b
   done
 done
 assert_exit 2 scripts/hack.sh guard kickoff
-assert_contains - "graduate is the only exit"
+assert_contains - "graduate is the only exit (/speckit-hack-graduate)"
 assert_exit 2 scripts/hack.sh guard speckit.specify
 assert_contains - "/speckit-hack-sprint"
 assert_exit 2 scripts/hack.sh guard /speckit-bug-fix

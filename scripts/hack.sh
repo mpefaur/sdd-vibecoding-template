@@ -382,7 +382,8 @@ def work_items(tasks_path, mode_path):
         for g in globs:
             if not any(fnmatch.fnmatch(g, pat) for pat in owned[member]):
                 errors.append(f"{wid}: {member} does not own {g} — split the work item by owner")
-        items.append("\t".join([wid, member, slice_, box, desc, ", ".join(globs)]))
+        title = desc if len(desc) <= 80 else desc[:79].rstrip() + "…"  # GitHub caps titles at 256
+        items.append("\t".join([wid, member, slice_, box, desc, ", ".join(globs), title]))
     for x in errors:
         print(x, file=sys.stderr)
     if errors:
@@ -822,7 +823,7 @@ redirect_for() {
     speckit.constitution) echo "the hackathon constitution is fixed until graduation" ;;
     speckit.analyze | speckit.checklist) echo "skipped in hackathon mode — the demo check is the definition of done" ;;
     speckit.bug.assess | speckit.bug.fix | speckit.bug.test) echo "fix directly once the demo check reproduces it; otherwise add it to debt.md" ;;
-    kickoff) echo "the project is in hackathon mode — graduate is the only exit (/speckit-hack-graduate)" ;;
+    kickoff) echo "a project's mode is chosen once; graduate is the only exit (/speckit-hack-graduate)" ;;
     *) return 1 ;;
   esac
 }
@@ -934,15 +935,15 @@ cmd_issues() {
   }
   titles=$(gh issue list --state all --json title --limit 1000 2>/dev/null) || die 1 "issues: gh could not list issues — check gh auth status"
   existing=$(HACK_TITLES=$titles hpy existing-ids)
-  local id member slice box desc paths body created=0 skipped=0
-  while IFS=$'\t' read -r id member slice box desc paths; do
+  local id member slice box desc paths title body created=0 skipped=0
+  while IFS=$'\t' read -r id member slice box desc paths title; do
     [[ -n "$id" ]] || continue
     if grep -qx "$id" <<<"$existing"; then skipped=$((skipped + 1)); continue; fi
-    body="Slice: $slice"$'\n'"Time box: ≤${box} min"$'\n'"Paths: $paths"$'\n\n'"From $tasks (hackathon mode)."
+    body="$desc"$'\n\n'"Slice: $slice"$'\n'"Time box: ≤${box} min"$'\n'"Paths: $paths"$'\n\n'"From $tasks (hackathon mode)."
     if [[ "$dry" == 1 ]]; then
-      echo "would run: gh issue create --title \"$id $desc\" --assignee $member"
+      echo "would run: gh issue create --title \"$id $title\" --assignee $member"
     else
-      gh issue create --title "$id $desc" --assignee "$member" --body "$body" || die 1 "issues: gh issue create failed for $id"
+      gh issue create --title "$id $title" --assignee "$member" --body "$body" || die 1 "issues: gh issue create failed for $id"
     fi
     created=$((created + 1))
   done <<<"$items"
