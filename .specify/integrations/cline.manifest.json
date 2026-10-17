@@ -1,17 +1,17 @@
 {
   "integration": "cline",
-  "version": "0.15.2",
-  "installed_at": "2026-08-04T17:05:40.238473+00:00",
+  "version": "1.1.1",
+  "installed_at": "2026-10-07T22:26:40.161816+00:00",
   "files": {
-    ".clinerules/workflows/speckit-analyze.md": "98d53a182dce2f73451ec7001a5248e48e9d37fb82c0d65432b638de38de2052",
-    ".clinerules/workflows/speckit-clarify.md": "383ce779e829417ce02e55973815b9b2b9fde300df82ffd0f9f80b851da43ca4",
-    ".clinerules/workflows/speckit-constitution.md": "4ce15cf880d1d0e5b039066a7c9072627a4eab3f42ce9435316a3b9319424018",
-    ".clinerules/workflows/speckit-implement.md": "3500c1dfed9ea7710f3a696fc33c55102d91ff7c2eb8b62fe97791aba4909f51",
-    ".clinerules/workflows/speckit-converge.md": "7bdf8ce21efb9e44c5f4a5e5e85fc3f25a37791575c14ef21192b268555206ff",
-    ".clinerules/workflows/speckit-plan.md": "b1464beec44446229cd660e3614143ccadf4010f723f16162583a3c1c6c4da03",
-    ".clinerules/workflows/speckit-checklist.md": "fbd9b651ae413cd94180065c69f1a36eded3cac2b3000b72eab3f1da941435ad",
-    ".clinerules/workflows/speckit-specify.md": "e5abff8d05afe896d85862d685a67bb01a8a34bfc773cf97fd28659ababe627e",
-    ".clinerules/workflows/speckit-tasks.md": "6d9508217cbec458e612d51371f44e2598b346092b5ed9a09e19c272e57401c8",
-    ".clinerules/workflows/speckit-taskstoissues.md": "87b57742ba296252dcf3f053271330501e6b606f707320da81b048ecfb212169"
+    ".clinerules/workflows/speckit-analyze.md": "fd6aa6941e9ccb1b0e4df1bd8b67cd67ecee5a8710acd9a1d561c941381bf0a4",
+    ".clinerules/workflows/speckit-clarify.md": "87fe5654bed38ed47dfdea0bef204e7715eed9290e2b815b5c74e4c21dcb1def",
+    ".clinerules/workflows/speckit-constitution.md": "6382c0e9581e47c66d433070559f078d9855982957526979e204ebcc613f34d6",
+    ".clinerules/workflows/speckit-implement.md": "fb42a98e2180da2f0fe62556cb83b369498374aafb3ace7e9d15daa54154f00c",
+    ".clinerules/workflows/speckit-converge.md": "b84e3538887ddced5f11f0603195fc1d2c6c3f3a49b830339b74f3f268ed85dd",
+    ".clinerules/workflows/speckit-plan.md": "6fc5017695a0350e13342f06562d499c87ae688eba7caf27e76a6847fbb45059",
+    ".clinerules/workflows/speckit-checklist.md": "b5d33fbf47f73c356715de3ddef86d832863b30badf0184febd53c9e3148770a",
+    ".clinerules/workflows/speckit-specify.md": "a0081e5e951b59e68f1139391f5211ddc9629fbf0e0d57aeb3fd51b1246c7f4b",
+    ".clinerules/workflows/speckit-tasks.md": "e814777017115cef64716d0db61b3eee2631193d341a7a459adcf728f3f01c8a",
+    ".clinerules/workflows/speckit-taskstoissues.md": "cd8cbd876e2335bc2f0d6ef8737218260bc08326bbacee25136f01d42a821548"
   }
 }
