@@ -56,6 +56,11 @@ Run against real tools on 2026-10-17:
    installed `pyflakes` into the user's Python (reverted the same day). *Fix*: the graduate
    command now forbids installing tools; it reports missing ones instead.
 6. **M9 — redundant refusal text** for `/kickoff`. *Fix*: reworded.
+7. **Post-merge CI on `main` — a test compared against the `main` branch.**
+   `test_full_mode_unchanged` (and part of `test_verify`) diffed against the local `main`
+   branch. In PR CI that branch is absent, so the comparison was silently skipped; on `main`
+   it compared the feature against itself, and failed. *Fix*: both now check properties and
+   explicit expected outputs, with no branch dependency.
 
 ## Known side effects (documented, not failures)
 

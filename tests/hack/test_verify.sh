@@ -27,16 +27,15 @@ assert_contains - "MANUAL"
 assert_not_contains - "verify: smoke —"
 assert_contains - "build not applicable"
 
-# Full mode: byte-identical to the original verify.sh for the same commands.
+# Full mode: the original behavior, stated explicitly (no comparison against a branch that
+# may not exist in a CI checkout).
 make_clone verify-full
-if orig=$(git -C "$HACK_TEST_SRC" show main:scripts/verify.sh 2>/dev/null); then
-  printf '%s\n' "$orig" >"$HACK_TEST_TMP/verify-orig-$$.sh"
-  want=$(LINT_CMD=true TEST_CMD=true BUILD_CMD=true bash "$HACK_TEST_TMP/verify-orig-$$.sh" --full 2>&1)
-  got=$(LINT_CMD=true TEST_CMD=true BUILD_CMD=true scripts/verify.sh --full 2>&1)
-  assert_eq "$got" "$want" "full-mode verify.sh output is unchanged"
-  want=$(bash "$HACK_TEST_TMP/verify-orig-$$.sh" 2>&1); got=$(scripts/verify.sh 2>&1)
-  assert_eq "$got" "$want" "unconfigured verify.sh output is unchanged"
-else
-  echo "  - skipped: no local 'main' branch to compare against"
-fi
+assert_exit 0 scripts/verify.sh --full
+assert_eq "$OUT" "verify: no commands configured yet (scripts/verify.sh, AGENTS.md §1) — nothing to check." \
+  "unconfigured full-mode verify.sh is still a no-op"
+OUT=$(LINT_CMD=true TEST_CMD=true BUILD_CMD=true scripts/verify.sh --full 2>&1)
+assert_eq "$OUT" "$(printf 'verify: lint — $ true\nverify: tests — $ true\nverify: build — $ true\nverify: OK')" \
+  "configured full-mode verify.sh output is unchanged"
+OUT=$(LINT_CMD=false TEST_CMD=true scripts/verify.sh 2>&1); code=$?
+assert_eq "$code" "1" "a failing full-mode command still fails verify.sh"
 finish
