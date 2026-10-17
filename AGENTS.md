@@ -83,10 +83,12 @@ A task is done only when a **real command** proves it — never "should work".
 
 ## 5. Token discipline
 
-- **Shell output → use [RTK](https://github.com/rtk-ai/rtk)** whenever an equivalent exists:
-  `rtk ls`, `rtk read`, `rtk grep`, `rtk find`, `rtk git status`, `rtk git diff`,
-  `rtk test`, `rtk lint`, `rtk err`. 60–90% fewer tokens, same information.
-- **Prose → concise.** Lead with the answer; report results, not a narration of steps.
+- **Shell output → [RTK](https://github.com/rtk-ai/rtk)**, 60–90% fewer tokens, same
+  information. `scripts/setup.sh` runs `rtk init` for your agent: where that integration
+  rewrites commands automatically, run them normally; otherwise use the `rtk` form
+  (`rtk ls`, `rtk read`, `rtk grep`, `rtk find`, `rtk git status`, `rtk git diff`,
+  `rtk test`, `rtk lint`, `rtk err`).
+- **Prose → concise.** Lead with the answer; the final report gives results, not a replay of every step.
   Code, commands and paths are never abbreviated.
 - Read the narrowest slice of a file that answers the question; avoid whole-file dumps.
 

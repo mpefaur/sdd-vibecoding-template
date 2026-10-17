@@ -17,7 +17,7 @@ disable-model-invocation: false
 $ARGUMENTS
 ```
 
-You **MUST** consider the user input before proceeding (if not empty).
+Use the user input above, if any, as instructions for this run.
 
 ## Scope Guard
 
@@ -93,7 +93,7 @@ Follow this execution flow:
    - If it does not exist, use the resolved template as the initial document.
    - Do not write back to any versioned template layer.
    - Identify every placeholder token of the form `[ALL_CAPS_IDENTIFIER]`.
-   **IMPORTANT**: The user might require less or more principles than the ones used in the template. If a number is specified, respect that - follow the general template. You will update the doc accordingly.
+   The user may want fewer or more principles than the template has. If they give a number, use it and keep the template's general structure.
 
 2. Collect/derive values for placeholders:
    - If user input (conversation) supplies a value, use it.

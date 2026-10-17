@@ -40,13 +40,14 @@ From the user's description, propose a **concrete** configuration. Name real too
 real versions; "a JS framework" is not a proposal. Pick the boring, well-supported
 default for the domain unless the user signalled otherwise.
 
-Present exactly this shape and stop:
+Present it in this shape and stop (values illustrative — pick the stack from the user's
+description):
 
 ```
 Propongo:
   Name:    habit-tracker
   Purpose: Web app that logs daily habits and shows streaks.
-  Stack:   TypeScript · Next.js 16 · SQLite/Drizzle · Vitest · Biome
+  Stack:   TypeScript · Next.js · SQLite/Drizzle · Vitest · Biome
   Run:     pnpm dev
   Test:    pnpm vitest run
   Lint:    pnpm biome check .

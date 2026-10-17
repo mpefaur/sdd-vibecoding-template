@@ -61,9 +61,7 @@ phases:
   into the feature branch **one at a time**, running the verification gate before each
   merge — never merge two stories concurrently, and never run two agents against the
   same working tree (concurrent `git add`/commit from separate subagents in one
-  directory races on the git index — this is the exact failure GitHub Spec Kit's
-  maintainers cited when they kept worktree orchestration out of spec-kit's core:
-  `github/spec-kit#1476`).
+  directory races on the git index).
 - **Any file path shared across stories** (e.g., a router both stories register into) →
   those stories aren't independent regardless of the `[P]` marker — run them
   sequentially in the main session instead.
@@ -88,21 +86,11 @@ completion criteria in `.claude/skills/speckit-implement/SKILL.md` as written.
 
 ## Shell commands
 
-Prefer RTK over raw tools; it emits the same information with 60–90% fewer tokens.
-
-| Instead of                | Use                             |
-| ------------------------- | ------------------------------- |
-| `ls -R`                   | `rtk ls`                        |
-| `cat file`                | `rtk read file`                 |
-| `grep -r pat`             | `rtk grep pat`                  |
-| `find . -name`            | `rtk find <pat>`                |
-| `git status` / `git diff` | `rtk git status` / `rtk git diff` |
-| `npm test` / `pytest`     | `rtk test`                      |
-| `eslint` / `ruff`         | `rtk lint`                      |
-| noisy stack trace         | `rtk err <cmd>`                 |
-
-Check the payoff with `rtk gain`. If RTK is not installed, fall back to the raw command —
-never block on it.
+`scripts/setup.sh` runs `rtk init -g`, which hooks RTK into Claude Code: shell commands
+are rewritten to their compact `rtk` form automatically, so run them normally. Read and
+search files with the built-in Read and Grep tools rather than `cat` / `grep` in Bash.
+Without RTK, raw commands work unchanged — never block on it. Check the payoff with
+`rtk gain`.
 
 ## Before saying "done"
 

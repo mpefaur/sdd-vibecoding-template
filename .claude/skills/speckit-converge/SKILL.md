@@ -16,7 +16,7 @@ disable-model-invocation: false
 $ARGUMENTS
 ```
 
-You **MUST** consider the user input before proceeding (if not empty).
+Use the user input above, if any, as instructions for this run.
 
 ## Pre-Execution Checks
 
