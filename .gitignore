@@ -16,7 +16,7 @@ secrets.*
 .pypirc
 
 # ─── AI agent local state ─────────────────────────────────────────────────────
-# Committed: .claude/skills, .claude/commands, .claude/settings.json, .claude/hooks,
+# Committed: .claude/skills, .claude/settings.json, .claude/hooks,
 #            .cursor/rules, .clinerules, .github, AGENTS.md
 # Ignored: anything machine-local or credential-bearing.
 .claude/settings.local.json
@@ -110,6 +110,7 @@ Desktop.ini
 *.sublime-workspace
 
 # ─── Infra state (often contains secrets) ─────────────────────────────────────
+.vercel/
 .terraform/
 *.tfstate
 *.tfstate.*

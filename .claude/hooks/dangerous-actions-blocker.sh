@@ -45,8 +45,33 @@ grep -qE 'chmod[[:space:]]+(-[a-zA-Z]+[[:space:]]+)*777[[:space:]]+/([[:space:]]
   && block "chmod 777 on /"
 
 # --- AGENTS.md §7: never force-push a shared branch --------------------------
-grep -qE 'git[[:space:]]+push[^;&|]*(-f\b|--force(-with-lease)?\b)[^;&|]*\b(main|master|develop)\b' <<<"$CMD" \
+SHARED='(main|master|develop)'
+grep -qE "git[[:space:]]+push[^;&|]*(-f\b|--force(-with-lease)?\b)[^;&|]*\b$SHARED\b" <<<"$CMD" \
   && block "force-push to a shared branch (AGENTS.md §7)"
+grep -qE "git[[:space:]]+push[^;&|]*[[:space:]]\+$SHARED\b" <<<"$CMD" \
+  && block "force-push (+refspec) to a shared branch (AGENTS.md §7)"
+# `git push -f` / `git push -f origin` with no branch named pushes the current
+# branch — block it when that branch is a shared one.
+if grep -qE 'git[[:space:]]+push[^;&|]*(-f\b|--force(-with-lease)?\b)' <<<"$CMD"; then
+  ARGS=$(grep -oE 'git[[:space:]]+push[^;&|]*' <<<"$CMD" | head -1 | sed -E 's/^git[[:space:]]+push//')
+  POSITIONAL=$(tr -s '[:space:]' '\n' <<<"$ARGS" | grep -cvE '^(-|$)')
+  BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+  [[ "$POSITIONAL" -le 1 && "$BRANCH" =~ ^$SHARED$ ]] \
+    && block "force-push of the current branch '$BRANCH' (AGENTS.md §7)"
+fi
+
+# --- Commit hooks are the secret scanner: never skip them --------------------
+# Agents reach for these when a hook fails; the fix is the failure, not the hook.
+# Quoted text is dropped first so a commit message mentioning "-n" isn't a match.
+UNQUOTED=$(sed -E "s/\"[^\"]*\"//g; s/'[^']*'//g" <<<"$CMD")
+grep -qE 'git[[:space:]]+[^;&|]*--no-verify\b' <<<"$UNQUOTED" \
+  && block "--no-verify skips the commit hooks (secret scan) — fix the failure instead"
+grep -qE 'git[[:space:]]+commit\b[^;&|]*[[:space:]]-[a-zA-Z]*n[a-zA-Z]*([[:space:]]|$)' <<<"$UNQUOTED" \
+  && block "git commit -n skips the commit hooks (secret scan) — fix the failure instead"
+grep -qE 'git[[:space:]]+(-c[[:space:]]*core\.hooksPath|config[^;&|]*core\.hooksPath)' <<<"$CMD" \
+  && block "overriding core.hooksPath disables the commit hooks"
+grep -qE '(^|[;&|[:space:]])SKIP=[^[:space:]]*[[:space:]]+([^;&|]*[[:space:]])?git[[:space:]]+commit\b' <<<"$CMD" \
+  && block "SKIP=… disables pre-commit hooks — fix the failure instead"
 
 # --- Publishing is a human decision ------------------------------------------
 grep -qE '\b(npm|pnpm|yarn)[[:space:]]+publish\b|\bcargo[[:space:]]+publish\b|\btwine[[:space:]]+upload\b' <<<"$CMD" \

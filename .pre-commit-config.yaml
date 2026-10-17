@@ -1,19 +1,21 @@
----
 # Last line of defence for AGENTS.md §6 — a secret that reaches git history is
 # already leaked, so the check belongs at the commit boundary, not only in the
-# agent's head.
+# agent's head. CI (.github/workflows/ci.yml) re-scans the full history.
 #
-#   pip install pre-commit && pre-commit install
+#   uv tool install pre-commit && pre-commit install --install-hooks
 #   pre-commit run --all-files      # check what is already tracked
 #
 # Deliberately minimal: secrets only. Add your own lint/format hooks per §1.
+# Dependabot (.github/dependabot.yml) bumps the revs below.
 
 repos:
+  - repo: https://github.com/betterleaks/betterleaks
+    rev: v1.9.0
+    hooks:
+      - id: betterleaks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
       - id: detect-private-key
-      - id: detect-aws-credentials
-        args: [--allow-missing-credentials]
       - id: check-added-large-files
         args: [--maxkb=1024]

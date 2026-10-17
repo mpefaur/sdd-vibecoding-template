@@ -1,0 +1,18 @@
+# Keeps the pinned versions in this repo from going stale (the failure mode of
+# any template: every clone freezes the day it was made).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: pre-commit
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      pre-commit:
+        patterns: ["*"]

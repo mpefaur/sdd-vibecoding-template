@@ -1,13 +1,6 @@
 {
-  "__doc": [
-    "Machine-local overrides. Copy to .claude/settings.local.json (gitignored).",
-    "Precedence: ~/.claude/settings.json < .claude/settings.json < this file.",
-    "JSON has no comments — the __doc keys are ignored by the parser.",
-    "Use it for what is true of YOUR machine only, never for team policy."
-  ],
-
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
-    "__doc": "Allow the commands you are tired of approving. Keep deny in the shared settings.json.",
     "allow": [
       "Bash(git status:*)",
       "Bash(git diff:*)",
@@ -17,15 +10,12 @@
       "Bash(docker build:*)"
     ]
   },
-
   "env": {
-    "__doc": "Point the Stop verification gate at this project's real commands (AGENTS.md §1).",
     "LINT_CMD": "npm run lint --silent",
-    "TEST_CMD": "npm test --silent"
+    "TEST_CMD": "npm test --silent",
+    "BUILD_CMD": "npm run build"
   },
-
   "hooks": {
-    "__doc": "An empty hooks array disables an inherited hook on this machine only.",
     "Stop": []
   }
 }

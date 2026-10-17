@@ -2,25 +2,31 @@
 #
 # sdd-vibecoding-template — one-shot toolchain bootstrap (Linux / macOS / WSL).
 #
-#   ./scripts/setup.sh [--skip-rtk] [--skip-caveman] [--skip-speckit] [--agent NAME]
+#   ./scripts/setup.sh [--skip-rtk] [--skip-speckit] [--with-caveman] [--agent NAME]
 #
 # Idempotent by design: every step checks before it acts, so re-running is safe and
 # never clobbers your constitution, specs, or agent config.
 #
 #   1. uv                2. specify-cli        3. Spec Kit init (only if missing)
-#   4. RTK               5. rtk init (agent)   6. Caveman
-#   7. verification      8. summary
+#   4. RTK               5. rtk init (agent)   6. pre-commit + commit hooks
+#   7. Caveman (opt-in)  8. verification      9. summary
+#
+# Versions are pinned below; Dependabot does not see them, so bump them by hand.
 #
 set -uo pipefail
+
+SPECKIT_VERSION="1.1.1"
+RTK_VERSION="v0.51.0"
+CAVEMAN_VERSION="v3.1.0"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-SKIP_RTK=0; SKIP_CAVEMAN=0; SKIP_SPECKIT=0; AGENT=""
+SKIP_RTK=0; WITH_CAVEMAN=0; SKIP_SPECKIT=0; AGENT=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --skip-rtk)     SKIP_RTK=1 ;;
-    --skip-caveman) SKIP_CAVEMAN=1 ;;
+    --with-caveman) WITH_CAVEMAN=1 ;;
     --skip-speckit) SKIP_SPECKIT=1 ;;
     --agent)        AGENT="${2:-}"; shift ;;
     -h|--help)      sed -n '2,20p' "$0" | sed 's/^#\s\?//'; exit 0 ;;
@@ -51,7 +57,7 @@ printf '%s╰──────────────────────�
 printf '%s  %s%s\n' "$D" "$REPO_ROOT" "$N"
 
 # ── 1. uv ─────────────────────────────────────────────────────────────────────
-step "1/8  uv (Python toolchain manager)"
+step "1/9  uv (Python toolchain manager)"
 if have uv; then
   ok "uv already installed ($(uv --version 2>/dev/null))"
 else
@@ -65,22 +71,22 @@ else
 fi
 
 # ── 2. specify-cli ────────────────────────────────────────────────────────────
-step "2/8  Spec Kit CLI (specify)"
+step "2/9  Spec Kit CLI (specify)"
 if [ "$SKIP_SPECKIT" = 1 ]; then
   skip "specify-cli"
 elif ! have uv; then
   note_warn "uv unavailable — cannot install specify-cli"
 else
   # `uv tool install --force` both installs and upgrades: idempotent either way.
-  if uv tool install specify-cli --force >/dev/null 2>&1; then
+  if uv tool install "specify-cli==$SPECKIT_VERSION" --force >/dev/null 2>&1; then
     ok "specify-cli ready ($(specify --version 2>/dev/null | tail -1))"
   else
-    fail "specify-cli install failed — retry: uv tool install specify-cli --force"
+    fail "specify-cli install failed — retry: uv tool install specify-cli==$SPECKIT_VERSION --force"
   fi
 fi
 
 # ── 3. Spec Kit project init ──────────────────────────────────────────────────
-step "3/8  Spec Kit project structure"
+step "3/9  Spec Kit project structure"
 if [ "$SKIP_SPECKIT" = 1 ]; then
   skip "specify init"
 elif [ -f .specify/memory/constitution.md ]; then
@@ -97,7 +103,7 @@ else
 fi
 
 # ── 4. RTK ────────────────────────────────────────────────────────────────────
-step "4/8  RTK (token-efficient CLI proxy)"
+step "4/9  RTK (token-efficient CLI proxy)"
 if [ "$SKIP_RTK" = 1 ]; then
   skip "RTK"
 elif have rtk; then
@@ -106,10 +112,10 @@ else
   echo "  installing rtk…"
   if have brew && brew install rtk >/dev/null 2>&1; then
     ok "rtk installed via Homebrew"
-  elif curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh >/dev/null 2>&1; then
+  elif curl -fsSL "https://raw.githubusercontent.com/rtk-ai/rtk/$RTK_VERSION/install.sh" | RTK_VERSION="$RTK_VERSION" sh >/dev/null 2>&1; then
     export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
-    ok "rtk installed via install.sh"
-  elif have cargo && cargo install --git https://github.com/rtk-ai/rtk >/dev/null 2>&1; then
+    ok "rtk installed via install.sh ($RTK_VERSION)"
+  elif have cargo && cargo install --git https://github.com/rtk-ai/rtk --tag "$RTK_VERSION" >/dev/null 2>&1; then
     ok "rtk installed via cargo"
   else
     note_warn "rtk install failed — see https://github.com/rtk-ai/rtk (agents fall back to raw commands)"
@@ -117,7 +123,7 @@ else
 fi
 
 # ── 5. rtk init for the detected agent ────────────────────────────────────────
-step "5/8  rtk init (agent integration)"
+step "5/9  rtk init (agent integration)"
 if [ "$SKIP_RTK" = 1 ] || ! have rtk; then
   skip "rtk init"
 else
@@ -134,7 +140,8 @@ else
   ok "detected agent: $AGENT"
   # -g = global config; --auto-patch = non-interactive. Re-running is a no-op patch.
   case "$AGENT" in
-    claude|copilot) RTK_ARGS=(-g --auto-patch) ;;
+    claude)         RTK_ARGS=(-g --auto-patch) ;;
+    copilot)        RTK_ARGS=(-g --copilot --auto-patch) ;;
     gemini)         RTK_ARGS=(-g --gemini --auto-patch) ;;
     codex)          RTK_ARGS=(-g --codex --auto-patch) ;;
     cline|kilocode|antigravity|kimi|hermes)
@@ -148,23 +155,45 @@ else
   fi
 fi
 
-# ── 6. Caveman ────────────────────────────────────────────────────────────────
-step "6/8  Caveman (output compression, default level: full)"
-if [ "$SKIP_CAVEMAN" = 1 ]; then
-  skip "Caveman"
+# ── 6. pre-commit + commit hooks ──────────────────────────────────────────────
+step "6/9  pre-commit (Betterleaks secret scan on every commit)"
+if ! have pre-commit; then
+  if have uv && uv tool install pre-commit >/dev/null 2>&1; then
+    ok "pre-commit installed ($(pre-commit --version 2>/dev/null))"
+  else
+    note_warn "pre-commit install failed — run: uv tool install pre-commit"
+  fi
+else
+  ok "pre-commit already installed ($(pre-commit --version 2>/dev/null))"
+fi
+if have pre-commit && git rev-parse --git-dir >/dev/null 2>&1; then
+  # --install-hooks fetches Betterleaks now, so the first commit isn't the slow one.
+  if pre-commit install --install-hooks >/dev/null 2>&1; then
+    ok "commit hooks installed (.git/hooks/pre-commit)"
+  else
+    note_warn "pre-commit install failed — run: pre-commit install --install-hooks"
+  fi
+fi
+
+# ── 7. Caveman (opt-in) ───────────────────────────────────────────────────────
+# Opt-in since v3: its own evals on current models show ~3% fewer output tokens than
+# a plain "be concise" (ultracave: ~35%) for ~1k extra input tokens per call, and the
+# CLI/hooks send usage telemetry by default. DO_NOT_TRACK=1 keeps that off.
+step "7/9  Caveman (opt-in prose compression)"
+if [ "$WITH_CAVEMAN" != 1 ]; then
+  skip "Caveman (pass --with-caveman to install)"
 elif ! have node; then
   note_warn "Node ≥18 required by Caveman and not found — skipping"
 else
-  # The installer is idempotent and only patches agents that are actually present.
-  if curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash >/dev/null 2>&1; then
-    ok "Caveman installed (activate with /caveman full — see CLAUDE.md)"
+  if curl -fsSL "https://raw.githubusercontent.com/JuliusBrussee/caveman/$CAVEMAN_VERSION/install.sh" | DO_NOT_TRACK=1 bash >/dev/null 2>&1; then
+    ok "Caveman $CAVEMAN_VERSION installed — set DO_NOT_TRACK=1 in your shell profile or run 'caveman telemetry off'"
   else
     note_warn "Caveman install failed — see https://github.com/JuliusBrussee/caveman"
   fi
 fi
 
-# ── 7. Verification ───────────────────────────────────────────────────────────
-step "7/8  Verification"
+# ── 8. Verification ───────────────────────────────────────────────────────────
+step "8/9  Verification"
 check() { # name, condition-command
   if eval "$2" >/dev/null 2>&1; then ok "$1"; else note_warn "$1 — MISSING"; fi
 }
@@ -173,16 +202,18 @@ check "specify CLI"                 "have specify"
 check ".specify/memory/constitution.md" "[ -f .specify/memory/constitution.md ]"
 check ".specify/templates/"         "[ -d .specify/templates ]"
 check "Claude skills (.claude/skills)"   "[ -d .claude/skills ]"
-check "/speckit.* aliases (.claude/commands)" "[ -f .claude/commands/speckit.specify.md ]"
+check "verify skill (.claude/skills/verify)" "[ -f .claude/skills/verify/SKILL.md ]"
+check "scripts/verify.sh"           "[ -x scripts/verify.sh ]"
 check "Cursor rules (.cursor/rules)"     "[ -f .cursor/rules/karpathy.mdc ]"
 check "Cline rules (.clinerules)"        "[ -f .clinerules/00-agents.md ]"
 check "AGENTS.md"                   "[ -f AGENTS.md ]"
 check "CLAUDE.md"                   "[ -f CLAUDE.md ]"
+check "pre-commit"                  "have pre-commit"
 [ "$SKIP_RTK" = 1 ]     || check "rtk"     "have rtk"
-[ "$SKIP_CAVEMAN" = 1 ] || check "node ≥18 (Caveman)" "have node"
+[ "$WITH_CAVEMAN" = 1 ] && check "node ≥18 (Caveman)" "have node"
 
-# ── 8. Summary ────────────────────────────────────────────────────────────────
-step "8/8  Summary"
+# ── 9. Summary ────────────────────────────────────────────────────────────────
+step "9/9  Summary"
 if [ "$WARNINGS" -eq 0 ]; then
   printf '  %sEverything is ready.%s\n' "$G" "$N"
 else
@@ -191,17 +222,14 @@ fi
 cat <<EOF
 
   ${B}Next steps${N}
-    1. Edit ${B}AGENTS.md${N} §1 — project name, purpose, stack, run/test/lint commands.
-    2. Open the repo in your agent (Claude Code, Cursor, Cline…).
-    3. ${B}/speckit.constitution${N}   tailor .specify/memory/constitution.md
-       ${B}/speckit.specify${N}        describe the first feature
-       ${B}/speckit.clarify${N}        resolve open questions
-       ${B}/speckit.plan${N} → ${B}/speckit.tasks${N} → ${B}/speckit.analyze${N} → ${B}/speckit.implement${N}
+    1. Open the repo in your agent (Claude Code, Cursor, Cline…).
+    2. ${B}/kickoff <what you want to build>${N} — fills AGENTS.md §1 and scripts/verify.sh
+    3. ${B}/speckit-specify${N} → ${B}/speckit-clarify${N} → ${B}/speckit-plan${N} → ${B}/speckit-tasks${N}
+       → ${B}/speckit-analyze${N} → ${B}/speckit-implement${N} ⇄ ${B}/speckit-converge${N}
 
   ${B}Token savings${N}
     rtk gain          token savings report
-    /caveman full     compression level (lite | full | ultra)
-    /caveman-stats    tokens and cost saved
+    rtk discover      commands still run the expensive way
 
   ${D}If PATH complains, add: export PATH="\$HOME/.local/bin:\$PATH"${N}
 

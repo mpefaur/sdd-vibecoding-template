@@ -1,0 +1,53 @@
+# The one gate every agent passes through. The Claude Code hooks only run in
+# Claude Code, and local commit hooks can be skipped; CI cannot.
+#
+#   secrets — Betterleaks over the full git history (AGENTS.md §6)
+#   verify  — scripts/verify.sh --full: lint, tests, build (AGENTS.md §4)
+#
+# /kickoff adds the stack's toolchain setup to the `verify` job. Until then
+# verify.sh has no commands and the job passes as a no-op.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secrets:
+    runs-on: ubuntu-latest
+    env:
+      BETTERLEAKS_VERSION: "1.9.0"
+      BETTERLEAKS_SHA256: f8b185a39ffcece2a1ca82bf3a4e7435cd81963ffd16b7a9128daf75f35f6de7
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install Betterleaks (checksum-pinned)
+        run: |
+          f="betterleaks_${BETTERLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSLO "https://github.com/betterleaks/betterleaks/releases/download/v${BETTERLEAKS_VERSION}/$f"
+          echo "${BETTERLEAKS_SHA256}  $f" | sha256sum -c -
+          tar -xzf "$f" betterleaks
+      - name: Scan git history
+        run: ./betterleaks git --redact --no-banner -v .
+
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # /kickoff: add the toolchain for AGENTS.md §1 here (setup-node, setup-uv, …),
+      # pinned by commit SHA like the checkout step above.
+      - name: Verify
+        run: ./scripts/verify.sh --full
