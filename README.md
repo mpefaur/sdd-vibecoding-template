@@ -23,6 +23,7 @@ language, framework, or architecture.
 | **`.cursor/rules/`**       | Cursor rules (Karpathy + SDD workflow), always applied                 |
 | **`.clinerules/`**         | Cline rules + Spec Kit workflows                                       |
 | **`/kickoff`**             | One command turns the template into a configured project              |
+| **Hackathon mode**         | `/hack-kickoff`: a reduced, guarded flow for 24–48 h team hackathons  |
 | **`scripts/verify.sh`**    | The definition of done — one script the hook, the `verify` skill and CI share |
 | **Guardrails**             | Bash sandbox + secret-read denies, destructive-command blocker, `Stop` gate, Betterleaks |
 | **CI + Dependabot**        | Secret scan and verify on every push; pinned versions kept current     |
@@ -30,14 +31,17 @@ language, framework, or architecture.
 
 ```
 sdd-vibecoding-template/
-├── .specify/          Spec Kit: constitution, templates, scripts, workflows
-├── .claude/           Claude skills (speckit-*, verify, kickoff),
+├── .specify/          Spec Kit: constitution, templates, scripts, workflows;
+│                      hack/ = the hackathon-mode extension (installed on activation)
+├── .claude/           Claude skills (speckit-*, verify, kickoff, hack-kickoff),
 │                      settings.json (sandbox, denies, hook wiring), hooks/
 ├── .cursor/           Cursor rules + Spec Kit skills
 ├── .clinerules/       Cline rules + Spec Kit workflows
 ├── .github/           CI workflow, dependabot.yml, copilot-instructions.md
 ├── docs/TEMPLATE_USAGE.md
-├── scripts/           verify.sh · setup.sh · setup.ps1
+├── scripts/           verify.sh · setup.sh · setup.ps1 · hack.sh (hackathon mode)
+├── specs/             the template's own feature specs (removed when you adopt it)
+├── tests/hack/        self-tests for hackathon mode (run in CI on the template only)
 ├── AGENTS.md          canonical agent contract
 ├── CLAUDE.md          Claude Code entry point (imports AGENTS.md)
 ├── .editorconfig · .env.example · .gitignore · .pre-commit-config.yaml · LICENSE
@@ -98,6 +102,101 @@ flow:
 > **Naming note.** Spec Kit installs skills named `speckit-<name>` — `/speckit-plan` in
 > Claude Code, the `speckit-plan` skill in Cursor, the `/speckit-plan.md` workflow in
 > Cline.
+
+---
+
+## Hackathon mode (24–48 h teams)
+
+The full flow above is built for projects that go to production. A hackathon is
+different: 2–5 people, 24–48 hours, and a proof of concept that only has to work on the
+**happy path** and survive a live demo. Hackathon mode is a reduced, guarded version of the
+same Spec-Driven flow for exactly that case.
+
+**A project's mode is chosen once, when you adopt the template.** Production projects never
+see hackathon mode, and a hackathon project can't drift back into the slow full flow; the
+only exit is graduation.
+
+### Your next hackathon, step by step
+
+```bash
+gh repo create my-hack --template mpefaur/sdd-vibecoding-template --public --clone
+cd my-hack && ./scripts/setup.sh && claude
+```
+
+```
+/hack-kickoff <the event, and what you will build>
+```
+
+1. **Adopt (≈2 min).** `/hack-kickoff` asks one round of questions. It wants the stack the
+   event imposes (any stack works), the end time, each teammate's GitHub handle and the
+   paths they own, the spec owner, and whether the organizers provide the code repository.
+   It proposes run/build/demo-check commands, waits for your OK, then runs
+   `scripts/hack.sh on`. Commit the result and push.
+2. **Specify (≈3 min).** The spec owner runs `/speckit-hack-sprint <idea>`. One pass writes
+   one spec built around the **demo script** (the exact steps shown on stage), a one-page
+   plan (integration contract plus ownership map), and time-boxed vertical slices. Each
+   slice becomes a **GitHub issue assigned to its owner**.
+3. **Build in parallel.** Everyone pulls, runs `scripts/hack.sh status`, and works only on
+   their issues and their paths. A slice is done when its demo step is added to the demo
+   check and `./scripts/verify.sh --full` passes (check + demo check + build).
+4. **Log shortcuts** in the spec's `debt.md`, one line each. They are not paid during the
+   event, but they are not lost either.
+5. **Before the freeze**, `/speckit-hack-demo` writes the stage run-sheet (`demo.md`): seed
+   data, timings, fallback recording, freeze time, rehearsal checklist.
+6. **After the event**, if the idea is worth continuing, `/speckit-hack-graduate`. It turns
+   the debt into tasks, removes every trace of hackathon mode, and hands the code to
+   `/speckit-converge` under the full production flow.
+
+### What changes compared with the full flow
+
+| | Full flow | Hackathon mode |
+|---|---|---|
+| Specs | one per feature | **one per project**, written by the spec owner |
+| Steps | constitution → specify → clarify → plan → tasks → analyze → implement ⇄ converge | `/speckit-hack-sprint` → implement (converge optional) |
+| Questions | `/speckit-clarify` | at most 3, then decide and record an assumption |
+| Done | lint + tests + build | state check + demo check + build |
+| Bugs | bug lane | fix directly when the demo check reproduces it, otherwise `debt.md` |
+| Work split | stories, branches | issues assigned by path ownership |
+
+### Guardrails that keep it fast
+
+You can't know which agent each teammate uses, so the protection that matters works for
+**any agent, or none**:
+
+- **`scripts/hack.sh check`** runs in the commit hook and in CI. It rejects a second spec,
+  any full-flow artifact (`research.md`, `checklists/`, …), bug-lane output, and edits to
+  the hackathon constitution. It also warns when a change crosses path owners. Make the
+  `secrets` and `verify` checks **required before merging** (`/hack-kickoff` offers it), and
+  a PR that breaks the mode cannot be merged.
+- The full-flow and bug-lane commands are refused with a redirect:
+  - by mandatory Spec Kit hooks, before the command starts, in Claude Code, Cursor and Cline;
+  - when typed, by native prompt hooks in Claude Code and Cursor;
+  - with a session-start banner in those same two agents.
+- Every agent instruction file (`AGENTS.md`, Copilot, Cursor, Cline) carries a notice
+  with the active spec, the allowed commands and the definition of done.
+- Secret scanning and the destructive-command blocker work exactly as in the full flow.
+
+### When the organizers provide the repository
+
+Adopt the template as a separate **coordinating project**. The spec, plan and issues live
+there, and the code lives in the event's repositories. Each teammate runs
+`scripts/hack.sh hooks` once per machine. That adds secret scanning and an artifact check
+to each event clone **without committing anything to it**, and prints the branch to target
+on every push, because a fork's PR otherwise defaults to the upstream. Enforcement in event
+repositories is local-only, and `status` says so.
+
+### Known limits
+
+- Cline has no native hooks: it relies on the mandatory Spec Kit hooks and the notices.
+- An agent that invokes the bug lane on its own is caught by the check, not stopped at the
+  command.
+- Codex, Copilot and Gemini get the notices and CI, unless their Spec Kit integration is
+  installed.
+- Windows needs Git Bash or WSL.
+- Still to validate in real sessions: Cursor and Cline, and a full multi-person dry run.
+
+Full guide: [docs/TEMPLATE_USAGE.md](docs/TEMPLATE_USAGE.md) §10. Design and validation:
+[specs/001-hackathon-mode/](specs/001-hackathon-mode/).
 
 ---
 
@@ -177,6 +276,8 @@ with `@AGENTS.md` and adds only Claude-specific detail.
 | `./scripts/setup.sh`                      | Bootstrap / repair the toolchain        |
 | `./scripts/setup.sh --skip-rtk`           | Spec Kit + commit hooks only            |
 | `./scripts/verify.sh --full`              | Lint, tests, build — the definition of done |
+| `scripts/hack.sh status`                  | Hackathon mode: mode, active spec, owners, what's allowed |
+| `scripts/hack.sh hooks`                   | Hackathon mode, organizer repos: install the local checks |
 | `specify check`                           | Which agents and tools are detected     |
 | `specify integration list`                | Installed / available agent integrations|
 | `specify integration install <key>`       | Add another agent (e.g. `copilot`)      |
