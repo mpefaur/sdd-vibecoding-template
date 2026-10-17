@@ -1,6 +1,13 @@
 # Project Constitution
 
 <!--
+  Sync Impact Report — 1.1.0 → 1.2.0 (MINOR: new section, no principle removed or redefined)
+  Added: "Hackathon Mode" section (alternate governance while .specify/mode.json exists).
+  Templates: plan/spec/tasks templates unchanged; hackathon templates are namespaced in
+  .specify/hack/extension/templates/. Follow-up: none.
+-->
+
+<!--
   Base constitution shipped with sdd-vibecoding-template.
   Stack-agnostic and intentionally light: 5 principles you can defend in a code review.
   Run /speckit-constitution to adapt it to your project, then bump the version below.
@@ -81,6 +88,17 @@ Bugs take the bug lane instead of a feature spec: `/speckit-bug-assess` →
 `/speckit-bug-fix` → `/speckit-bug-test`. The fix targets the assessed cause, and only a
 `verified` result closes the bug.
 
+## Hackathon Mode
+
+A project adopted with `/hack-kickoff` runs in hackathon mode while `.specify/mode.json`
+exists. During that time it is governed by the hackathon constitution
+(`.specify/extensions/hack/templates/hack-constitution.md`) instead of the principles
+above, with two exceptions that apply unchanged in both modes: Principle V (Secure and
+Reproducible by Default), and Quality Gates 4–5 (no secrets, Conventional Commits). The
+mode is chosen once at adoption, and the only exit is graduation
+(`/speckit-hack-graduate`), after which this constitution governs again and the recorded
+debt becomes tasks.
+
 ## Governance
 
 This constitution supersedes ad-hoc convention and agent defaults. Amendments require an
@@ -90,4 +108,4 @@ under Complexity Tracking with its justification and the simpler alternative rej
 Agents load this file through `AGENTS.md` and must flag — not silently work around — a
 requested change that violates it.
 
-**Version**: 1.1.0 | **Ratified**: 2026-08-04 | **Last Amended**: 2026-10-07
+**Version**: 1.2.0 | **Ratified**: 2026-08-04 | **Last Amended**: 2026-10-17

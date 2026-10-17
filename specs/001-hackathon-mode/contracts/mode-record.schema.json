@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mpefaur/sdd-vibecoding-template/specs/001-hackathon-mode/mode-record.schema.json",
+  "title": "Hackathon mode record (.specify/mode.json)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "mode", "variant", "event", "ends_at", "stack", "commands", "demo_check",
+    "feature_directory", "spec_owner", "owners", "constitution_sha256", "activated_at"
+  ],
+  "properties": {
+    "mode": { "const": "hackathon" },
+    "variant": { "enum": ["standard", "coordinating"] },
+    "event": { "type": "string", "minLength": 1 },
+    "ends_at": { "type": "string", "format": "date-time" },
+    "stack": { "type": "string", "minLength": 1 },
+    "runtime": { "type": "object", "additionalProperties": { "type": "string" } },
+    "commands": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["run", "build", "smoke"],
+      "properties": {
+        "run": { "type": "string", "minLength": 1 },
+        "build": { "type": ["string", "null"] },
+        "smoke": { "type": ["string", "null"] }
+      }
+    },
+    "demo_check": { "enum": ["automated", "manual"] },
+    "feature_directory": { "type": "string", "pattern": "^specs/[0-9]{3}-[a-z0-9-]+$" },
+    "spec_owner": { "type": "string", "minLength": 1 },
+    "owners": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["member", "paths"],
+        "properties": {
+          "member": { "type": "string", "minLength": 1 },
+          "paths": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+        }
+      }
+    },
+    "event_repos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "path", "url", "target_branch"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "path": { "type": "string" },
+          "url": { "type": "string" },
+          "target_branch": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "constitution_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "activated_at": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "variant": { "const": "coordinating" } } },
+      "then": { "required": ["event_repos"], "properties": { "event_repos": { "minItems": 1 } } }
+    },
+    {
+      "if": { "properties": { "demo_check": { "const": "manual" } } },
+      "then": { "properties": { "commands": { "properties": { "smoke": { "type": "null" } } } } }
+    },
+    {
+      "if": { "properties": { "demo_check": { "const": "automated" } } },
+      "then": { "properties": { "commands": { "properties": { "smoke": { "type": "string" } } } } }
+    }
+  ]
+}

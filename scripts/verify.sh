@@ -28,6 +28,15 @@ set -uo pipefail
 FULL=0
 [[ "${1:-}" == "--full" ]] && FULL=1
 
+# hackathon-mode:begin — in hackathon mode "done" is check + demo check (+ build with
+# --full), owned by scripts/hack.sh. /kickoff removes this block on a full adoption.
+HACK_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ -f "$HACK_ROOT/.specify/mode.json" ]]; then
+  if [[ "$FULL" == 1 ]]; then exec "$HACK_ROOT/scripts/hack.sh" verify --full; fi
+  exec "$HACK_ROOT/scripts/hack.sh" verify
+fi
+# hackathon-mode:end
+
 if [[ -z "$LINT_CMD$TEST_CMD$BUILD_CMD" ]]; then
   echo "verify: no commands configured yet (scripts/verify.sh, AGENTS.md §1) — nothing to check."
   exit 0

@@ -1,0 +1,34 @@
+{
+  "mode": "hackathon",
+  "variant": "coordinating",
+  "event": "Test Hack 2026",
+  "ends_at": "2099-01-01T18:00:00+00:00",
+  "stack": "bash",
+  "runtime": {
+    "bash": "3.2"
+  },
+  "commands": {
+    "run": "true",
+    "build": "true",
+    "smoke": "true"
+  },
+  "demo_check": "automated",
+  "feature_directory": "specs/001-test-hack-2026",
+  "spec_owner": "alice",
+  "owners": [
+    {
+      "member": "alice",
+      "paths": [
+        "api/**"
+      ]
+    },
+    {
+      "member": "bob",
+      "paths": [
+        "web/**"
+      ]
+    }
+  ],
+  "constitution_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "activated_at": "2026-10-17T12:00:00+00:00"
+}
