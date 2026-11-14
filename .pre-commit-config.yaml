@@ -10,7 +10,7 @@
 
 repos:
   - repo: https://github.com/betterleaks/betterleaks
-    rev: v1.9.0
+    rev: v1.10.0
     hooks:
       - id: betterleaks
   - repo: https://github.com/pre-commit/pre-commit-hooks
